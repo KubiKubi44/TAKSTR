@@ -15,8 +15,10 @@ import {
 // Enumy (Postgres pgEnum, ne volné stringy)
 // ─────────────────────────────────────────────────────────────
 
+// `osm` = automatické discovery přes OpenStreetMap / Overpass
+// (původně se počítalo s Google Places, ale přešli jsme na OSM — bez klíče/karty).
 export const leadSourceEnum = pgEnum("lead_source", [
-  "places_api",
+  "osm",
   "manual",
   "telegram",
 ]);
@@ -301,3 +303,12 @@ export type Outreach = typeof outreach.$inferSelect;
 export type NewOutreach = typeof outreach.$inferInsert;
 export type Activity = typeof activity.$inferSelect;
 export type NewActivity = typeof activity.$inferInsert;
+
+// Union typy z enumů (např. "discovered" | "scored" | …)
+export type LeadSource = (typeof leadSourceEnum.enumValues)[number];
+export type LeadStatus = (typeof leadStatusEnum.enumValues)[number];
+export type DraftStatus = (typeof draftStatusEnum.enumValues)[number];
+export type OutreachDirection = (typeof outreachDirectionEnum.enumValues)[number];
+export type ActivityType = (typeof activityTypeEnum.enumValues)[number];
+export type ActivityActor = (typeof activityActorEnum.enumValues)[number];
+export type CampaignStatus = (typeof campaignStatusEnum.enumValues)[number];
