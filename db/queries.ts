@@ -191,6 +191,10 @@ export async function getProjectMeta(vercelProjectId: string) {
   });
 }
 
+export async function getProjectMetaById(id: string) {
+  return db.query.projectMeta.findFirst({ where: eq(projectMeta.id, id) });
+}
+
 // Nadcházející události (od teď, nehotové) — pro dashboard.
 export async function getUpcomingEvents(limit = 5) {
   return db.query.calendarEvent.findMany({

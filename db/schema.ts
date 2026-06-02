@@ -258,11 +258,14 @@ export const calendarEvent = pgTable("calendar_event", {
 // klíčované Vercel project id. Živá data (stav deploye) jdou z Vercel API.
 export const projectMeta = pgTable("project_meta", {
   id: uuid("id").primaryKey().defaultRandom(),
-  vercelProjectId: text("vercel_project_id").notNull().unique(),
+  // null = ručně přidaný projekt (není na Vercelu)
+  vercelProjectId: text("vercel_project_id").unique(),
   name: text("name"),
+  url: text("url"), // web (hlavně u ručních projektů)
   buildPrice: integer("build_price"), // výrobní cena (Kč)
   monthlyPrice: integer("monthly_price"), // cena za měsíční správu (Kč)
   note: text("note"),
+  hidden: boolean("hidden").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

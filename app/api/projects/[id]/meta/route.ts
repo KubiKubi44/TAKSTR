@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { projectMeta } from "@/db/schema";
 
@@ -13,6 +14,7 @@ export async function POST(
     monthlyPrice?: unknown;
     note?: unknown;
     name?: unknown;
+    url?: string;
   } | null;
 
   const toInt = (v: unknown): number | null => {
@@ -21,27 +23,33 @@ export async function POST(
     return Number.isFinite(n) ? Math.round(n) : null;
   };
 
-  const values = {
-    vercelProjectId: id,
+  const fields = {
     name: typeof body?.name === "string" ? body.name : null,
     buildPrice: toInt(body?.buildPrice),
     monthlyPrice: toInt(body?.monthlyPrice),
     note: typeof body?.note === "string" ? body.note : null,
   };
 
-  await db
-    .insert(projectMeta)
-    .values(values)
-    .onConflictDoUpdate({
-      target: projectMeta.vercelProjectId,
-      set: {
-        name: values.name,
-        buildPrice: values.buildPrice,
-        monthlyPrice: values.monthlyPrice,
-        note: values.note,
+  if (id.startsWith("prj_")) {
+    // Vercel projekt → upsert podle vercel_project_id
+    await db
+      .insert(projectMeta)
+      .values({ vercelProjectId: id, ...fields })
+      .onConflictDoUpdate({
+        target: projectMeta.vercelProjectId,
+        set: { ...fields, updatedAt: new Date() },
+      });
+  } else {
+    // ruční projekt → update podle uuid (případně i url)
+    await db
+      .update(projectMeta)
+      .set({
+        ...fields,
+        url: typeof body?.url === "string" ? body.url.trim() || null : undefined,
         updatedAt: new Date(),
-      },
-    });
+      })
+      .where(eq(projectMeta.id, id));
+  }
 
   return Response.json({ ok: true });
 }

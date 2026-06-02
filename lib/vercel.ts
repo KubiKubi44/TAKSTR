@@ -13,6 +13,7 @@ export interface VercelProject {
   deployedAt: number | null; // ms timestamp
   repo: string | null;
   dashboardUrl: string;
+  analyticsUrl: string;
 }
 
 interface RawDeployment {
@@ -46,11 +47,12 @@ function authHeaders(token: string) {
   return { authorization: `Bearer ${token}` };
 }
 
-function mapProject(p: RawProject, teamSlug: string): VercelProject {
+function mapProject(p: RawProject, slug: string): VercelProject {
   const deploys = p.latestDeployments ?? [];
   const prod = deploys.find((d) => d.target === "production") ?? deploys[0];
   const repo =
     p.link?.repo && p.link?.org ? `${p.link.org}/${p.link.repo}` : p.link?.repo ?? null;
+  const dashboardUrl = `https://vercel.com/${slug}/${p.name}`;
   return {
     id: p.id,
     name: p.name,
@@ -59,7 +61,8 @@ function mapProject(p: RawProject, teamSlug: string): VercelProject {
     url: prod?.url ? `https://${prod.url}` : null,
     deployedAt: prod?.createdAt ?? null,
     repo,
-    dashboardUrl: `https://vercel.com/${teamSlug}${p.name}`,
+    dashboardUrl,
+    analyticsUrl: `${dashboardUrl}/analytics`,
   };
 }
 
@@ -67,6 +70,27 @@ function requireToken(): string {
   const token = process.env.VERCEL_TOKEN;
   if (!token) throw new Error("VERCEL_TOKEN není nastavený v .env.");
   return token;
+}
+
+// Owner slug (username u osobního účtu / slug týmu) — pro správné odkazy.
+let cachedSlug: string | null = null;
+async function getOwnerSlug(token: string): Promise<string> {
+  if (cachedSlug !== null) return cachedSlug;
+  const team = process.env.VERCEL_TEAM_ID;
+  try {
+    if (team) {
+      const r = await fetch(`${BASE}/v2/teams/${team}`, { headers: authHeaders(token) });
+      const d = (await r.json()) as { slug?: string };
+      cachedSlug = d.slug ?? team;
+    } else {
+      const r = await fetch(`${BASE}/v2/user`, { headers: authHeaders(token) });
+      const d = (await r.json()) as { user?: { username?: string } };
+      cachedSlug = d.user?.username ?? "";
+    }
+  } catch {
+    cachedSlug = team ?? "";
+  }
+  return cachedSlug;
 }
 
 export async function listVercelProjects(): Promise<VercelProject[]> {
@@ -85,8 +109,8 @@ export async function listVercelProjects(): Promise<VercelProject[]> {
   }
 
   const data = (await res.json()) as { projects?: RawProject[] };
-  const teamSlug = team ? `${team}/` : "";
-  return (data.projects ?? []).map((p) => mapProject(p, teamSlug));
+  const slug = await getOwnerSlug(token);
+  return (data.projects ?? []).map((p) => mapProject(p, slug));
 }
 
 export async function getVercelProject(
@@ -107,7 +131,8 @@ export async function getVercelProject(
   }
 
   const p = (await res.json()) as RawProject;
-  const base = mapProject(p, team ? `${team}/` : "");
+  const slug = await getOwnerSlug(token);
+  const base = mapProject(p, slug);
   const deployments = (p.latestDeployments ?? []).slice(0, 6).map((d) => ({
     url: d.url ? `https://${d.url}` : null,
     state: d.readyState ?? d.state ?? null,

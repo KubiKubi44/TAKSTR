@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageContainer } from "@/components/page-shell";
+import { ProjectCardActions } from "@/components/project-card-actions";
 import { ProjectMetaForm } from "@/components/project-meta-form";
 import { Card } from "@/components/ui/card";
-import { getProjectMeta } from "@/db/queries";
+import { getProjectMeta, getProjectMetaById } from "@/db/queries";
 import { getVercelProject } from "@/lib/vercel";
 
 export const dynamic = "force-dynamic";
@@ -16,16 +17,48 @@ function ago(ms: number | null): string {
   if (h < 48) return `před ${h} h`;
   return `před ${Math.round(h / 24)} dny`;
 }
-
 function stateBadge(state: string | null): string {
   if (state === "READY") return "border-primary/40 text-primary";
-  if (state === "ERROR" || state === "CANCELED")
-    return "border-destructive/50 text-destructive";
+  if (state === "ERROR" || state === "CANCELED") return "border-destructive/50 text-destructive";
   return "border-border text-muted-foreground";
 }
-
 const czk = (n: number | null | undefined) =>
   n || n === 0 ? `${n.toLocaleString("cs-CZ")} Kč` : "—";
+
+function PricesCard({
+  projectId,
+  projectName,
+  meta,
+}: {
+  projectId: string;
+  projectName: string;
+  meta: { buildPrice: number | null; monthlyPrice: number | null; note: string | null } | null | undefined;
+}) {
+  return (
+    <Card className="gap-4 p-5">
+      <h2 className="font-heading text-sm font-semibold">Ceny &amp; poznámky</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="border border-border p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Výrobní cena</p>
+          <p className="mt-1 font-mono text-xl tabular-nums">{czk(meta?.buildPrice)}</p>
+        </div>
+        <div className="border border-border p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíční správa</p>
+          <p className="mt-1 font-mono text-xl tabular-nums text-primary">{czk(meta?.monthlyPrice)}</p>
+        </div>
+      </div>
+      <ProjectMetaForm
+        projectId={projectId}
+        projectName={projectName}
+        initial={{
+          buildPrice: meta?.buildPrice ?? null,
+          monthlyPrice: meta?.monthlyPrice ?? null,
+          note: meta?.note ?? null,
+        }}
+      />
+    </Card>
+  );
+}
 
 export default async function ProjectDetailPage({
   params,
@@ -33,7 +66,43 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const isVercel = id.startsWith("prj_");
 
+  // ── Ruční projekt ──
+  if (!isVercel) {
+    const meta = await getProjectMetaById(id);
+    if (!meta) notFound();
+    return (
+      <PageContainer wide>
+        <div className="mb-2">
+          <Link href="/projekty" className="font-mono text-xs text-muted-foreground hover:text-primary">
+            ← Projekty
+          </Link>
+        </div>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight">{meta.name ?? "—"}</h1>
+            <span className="border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              ruční
+            </span>
+          </div>
+          <div className="flex items-center gap-3 font-mono text-xs">
+            {meta.url && (
+              <a href={meta.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                Otevřít web ↗
+              </a>
+            )}
+            <ProjectCardActions id={meta.id} isVercel={false} hidden={meta.hidden} redirect="/projekty" />
+          </div>
+        </div>
+        <div className="max-w-xl">
+          <PricesCard projectId={meta.id} projectName={meta.name ?? ""} meta={meta} />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // ── Vercel projekt ──
   let project;
   try {
     project = await getVercelProject(id);
@@ -47,7 +116,6 @@ export default async function ProjectDetailPage({
     );
   }
   if (!project) notFound();
-
   const meta = await getProjectMeta(id);
 
   return (
@@ -60,15 +128,9 @@ export default async function ProjectDetailPage({
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            {project.name}
-          </h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{project.name}</h1>
           {project.state && (
-            <span
-              className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateBadge(
-                project.state,
-              )}`}
-            >
+            <span className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateBadge(project.state)}`}>
               {project.state.toLowerCase()}
             </span>
           )}
@@ -79,46 +141,19 @@ export default async function ProjectDetailPage({
               Otevřít web ↗
             </a>
           )}
+          <a href={project.analyticsUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary">
+            Analytics ↗
+          </a>
           <a href={project.dashboardUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary">
             Vercel ↗
           </a>
+          <ProjectCardActions id={project.id} isVercel hidden={meta?.hidden ?? false} redirect="/projekty" />
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* ceny + poznámky */}
-        <div className="space-y-6">
-          <Card className="gap-4 p-5">
-            <h2 className="font-heading text-sm font-semibold">Ceny &amp; poznámky</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="border border-border p-3">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Výrobní cena
-                </p>
-                <p className="mt-1 font-mono text-xl tabular-nums">{czk(meta?.buildPrice)}</p>
-              </div>
-              <div className="border border-border p-3">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Měsíční správa
-                </p>
-                <p className="mt-1 font-mono text-xl tabular-nums text-primary">
-                  {czk(meta?.monthlyPrice)}
-                </p>
-              </div>
-            </div>
-            <ProjectMetaForm
-              projectId={project.id}
-              projectName={project.name}
-              initial={{
-                buildPrice: meta?.buildPrice ?? null,
-                monthlyPrice: meta?.monthlyPrice ?? null,
-                note: meta?.note ?? null,
-              }}
-            />
-          </Card>
-        </div>
+        <PricesCard projectId={project.id} projectName={project.name} meta={meta} />
 
-        {/* vercel info */}
         <div className="space-y-6">
           <Card className="gap-2 p-5">
             <h2 className="mb-2 font-heading text-sm font-semibold">Vercel</h2>
@@ -127,6 +162,14 @@ export default async function ProjectDetailPage({
               <Row k="Repozitář" v={project.repo ?? "—"} />
               <Row k="Poslední deploy" v={ago(project.deployedAt)} />
             </dl>
+            <a
+              href={project.analyticsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block font-mono text-xs text-primary hover:underline"
+            >
+              Otevřít Vercel Analytics ↗
+            </a>
           </Card>
 
           <Card className="gap-3 p-5">
@@ -137,16 +180,12 @@ export default async function ProjectDetailPage({
               <ul className="space-y-2 text-sm">
                 {project.deployments.map((d, i) => (
                   <li key={i} className="flex items-center gap-3">
-                    <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
-                      {ago(d.createdAt)}
-                    </span>
+                    <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">{ago(d.createdAt)}</span>
                     <span className={`font-mono text-[10px] uppercase tracking-wider ${stateBadge(d.state)}`}>
                       {d.state?.toLowerCase() ?? "—"}
                     </span>
                     {d.target === "production" && (
-                      <span className="font-mono text-[10px] uppercase text-muted-foreground">
-                        prod
-                      </span>
+                      <span className="font-mono text-[10px] uppercase text-muted-foreground">prod</span>
                     )}
                     {d.url && (
                       <a href={d.url} target="_blank" rel="noreferrer" className="ml-auto truncate font-mono text-xs text-muted-foreground hover:text-primary">
