@@ -5,8 +5,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+
+const MONTHS = [
+  "Leden",
+  "Únor",
+  "Březen",
+  "Duben",
+  "Květen",
+  "Červen",
+  "Červenec",
+  "Srpen",
+  "Září",
+  "Říjen",
+  "Listopad",
+  "Prosinec",
+];
 
 export interface CalEvent {
   id: string;
@@ -69,10 +91,7 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
     return out;
   }, [cursor]);
 
-  const monthLabel = new Date(cursor.y, cursor.m, 1).toLocaleDateString("cs-CZ", {
-    month: "long",
-    year: "numeric",
-  });
+  const years = Array.from({ length: 9 }, (_, i) => today.getFullYear() - 3 + i);
 
   function shift(delta: number) {
     setCursor(({ y, m }) => {
@@ -115,9 +134,36 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
             <Button size="sm" variant="outline" onClick={() => shift(-1)}>
               ←
             </Button>
-            <span className="min-w-40 text-center font-heading text-sm font-semibold capitalize">
-              {monthLabel}
-            </span>
+            <Select
+              value={String(cursor.m)}
+              onValueChange={(v) => setCursor((c) => ({ ...c, m: Number(v) }))}
+            >
+              <SelectTrigger size="sm" className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={String(cursor.y)}
+              onValueChange={(v) => setCursor((c) => ({ ...c, y: Number(v) }))}
+            >
+              <SelectTrigger size="sm" className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button size="sm" variant="outline" onClick={() => shift(1)}>
               →
             </Button>
@@ -152,7 +198,7 @@ export function CalendarView({ events }: { events: CalEvent[] }) {
                 <div
                   key={i}
                   className={cn(
-                    "min-h-24 border-t border-r border-white/5 p-1.5 [&:nth-child(7n)]:border-r-0",
+                    "min-h-24 border-t border-r border-white/5 p-1.5 nth-[7n]:border-r-0",
                     !cell && "bg-black/10",
                   )}
                 >
