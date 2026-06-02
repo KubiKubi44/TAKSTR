@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lead-gen & outreach nástroj
 
-## Getting Started
+Interní nástroj na vyhledávání potenciálních klientů (firmy se slabým webem),
+jejich analýzu a **poloautomatické** oslovování e-mailem. Ovládání z webu i
+z mobilu přes Telegram bota.
 
-First, run the development server:
+> **Hlavní princip:** žádný e-mail neodejde bez explicitního schválení člověka.
+> Skóruj levně, generuj draze. Každý mail má v patičce identifikaci odesílatele
+> a opt-out. Měříme odpovědi, ne odeslané.
+
+## Tech stack
+
+- **Next.js 16** (App Router, TypeScript) — full-stack, Route Handlers pro API i Telegram webhook
+- **TailwindCSS v4 + shadcn/ui** — dark-first, editorial styl
+- **Drizzle ORM + PostgreSQL** hostovaný na Supabase (jen jako hostovaný Postgres — žádný Supabase JS klient/auth/storage)
+- **@anthropic-ai/sdk** — generování draftů
+- **cheerio** — parsování HTML
+- **Resend** — odesílání e-mailů
+- **Google Places API** — discovery
+- **Telegram Bot API** — přes webhook
+
+## Požadavky
+
+- Node.js ≥ 20 (vyvíjeno na 22)
+- Účet na Supabase (stačí free tier — bereme jen Postgres)
+- API klíče: Anthropic, Resend, Google Places, (volitelně PageSpeed), Telegram bot token
+
+## 1. Instalace
+
+```bash
+npm install
+```
+
+## 2. Nastavení databáze (Supabase)
+
+1. Založ projekt na [supabase.com](https://supabase.com).
+2. V dashboardu jdi na **Project → Connect** a zkopíruj dva connection stringy:
+   - **Connection pooler** (port `6543`) → do `DATABASE_URL`
+   - **Direct connection** (port `5432`) → do `DIRECT_URL`
+3. Zkopíruj šablonu env a vyplň hodnoty:
+
+```bash
+cp .env.example .env
+```
+
+Vyplň alespoň `DATABASE_URL` a `DIRECT_URL`. Ostatní klíče doplníš podle toho,
+kterou fázi zrovna testuješ (Places, Anthropic, Resend, Telegram).
+
+> **Proč dva stringy?** Běžné dotazy jdou přes transaction pooler (6543), který
+> škáluje spojení, ale neumí DDL/advisory locky. Migrace přes `drizzle-kit`
+> proto musí jít přes direct connection (5432).
+
+## 3. Migrace
+
+> Schéma a migrace se přidávají od **Fáze 1**. Po Fázi 0 je `db/schema.ts`
+> ještě prázdné, takže `generate` zatím nic nevytvoří.
+
+```bash
+npm run db:generate   # vygeneruje SQL migraci z db/schema.ts
+npm run db:migrate    # aplikuje migrace na DB (přes DIRECT_URL)
+npm run db:studio     # volitelně: Drizzle Studio nad DB
+```
+
+## 4. Seed (od Fáze 1)
+
+```bash
+npm run db:seed       # vloží jednoho app_user (tebe)
+```
+
+## 5. Vývojový server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App běží na <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 6. Telegram webhook (od Fáze 7)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Telegram webhook potřebuje **veřejnou HTTPS adresu**. V lokálním vývoji použij
+tunel (např. [ngrok](https://ngrok.com) nebo `cloudflared`):
 
-## Learn More
+```bash
+ngrok http 3000
+# vznikne např. https://abcd-12-34.ngrok-free.app
+```
 
-To learn more about Next.js, take a look at the following resources:
+Webhook pak zaregistruješ na Telegram API (detailní skript přijde ve Fázi 7):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=https://<tvuj-tunel>/api/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Bot reaguje jen na `chat_id` z `TELEGRAM_ALLOWED_CHAT_ID` (whitelist).
 
-## Deploy on Vercel
+## Struktura projektu
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/            # Next.js App Router (stránky + app/api Route Handlers)
+components/      # React komponenty (components/ui = shadcn)
+db/              # Drizzle: schema.ts, client.ts, migrace, seed
+lib/             # places, triage, analyzer, claude, resend, telegram, utils
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Fáze stavby
+
+Aplikace se staví fázovaně; po každé fázi commit + krátké shrnutí.
+
+0. **Scaffold** — běžící prázdná appka, závislosti, napojení DB ← *hotovo*
+1. Datový model (7 tabulek, enumy, relations, migrace, seed)
+2. Discovery + triáž (Places API, levné skóre)
+3. Hloubková analýza (cheerio, site_analysis)
+4. Generování draftu (Claude API, verzování)
+5. App UI (dark editorial)
+6. Odesílání + tracking (Resend, metriky)
+7. Telegram bot (webhook, schvalování z mobilu)
