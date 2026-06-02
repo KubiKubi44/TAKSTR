@@ -34,9 +34,14 @@ npm install
 ## 2. Nastavení databáze (Supabase)
 
 1. Založ projekt na [supabase.com](https://supabase.com).
-2. V dashboardu jdi na **Project → Connect** a zkopíruj dva connection stringy:
-   - **Connection pooler** (port `6543`) → do `DATABASE_URL`
-   - **Direct connection** (port `5432`) → do `DIRECT_URL`
+2. V dashboardu jdi na **Project → Connect** a zkopíruj dva connection stringy
+   (stejný pooler host, jen jiný port):
+   - **Transaction pooler** (port `6543`) → do `DATABASE_URL`
+   - **Session pooler** (port `5432`) → do `DIRECT_URL`
+
+   > Heslo se speciálními znaky (`@`, `:`, …) percent-encoduj (`@` → `%40`).
+   > „Direct connection" (`db.<ref>.supabase.co`) je IPv6-only a z IPv4 sítí se
+   > nepřeloží — proto pro migrace bereme **session pooler** (5432), ne direct.
 3. Zkopíruj šablonu env a vyplň hodnoty:
 
 ```bash
@@ -47,8 +52,8 @@ Vyplň alespoň `DATABASE_URL` a `DIRECT_URL`. Ostatní klíče doplníš podle 
 kterou fázi zrovna testuješ (Places, Anthropic, Resend, Telegram).
 
 > **Proč dva stringy?** Běžné dotazy jdou přes transaction pooler (6543), který
-> škáluje spojení, ale neumí DDL/advisory locky. Migrace přes `drizzle-kit`
-> proto musí jít přes direct connection (5432).
+> škáluje spojení, ale neumí DDL/advisory locky ani prepared statements. Migrace
+> přes `drizzle-kit` proto jdou přes session pooler (5432).
 
 ## 3. Migrace
 
