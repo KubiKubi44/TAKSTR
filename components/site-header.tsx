@@ -41,9 +41,14 @@ export function SiteHeader() {
         </nav>
         <Link
           href="/"
-          className="flex items-center font-heading text-sm font-semibold tracking-tight"
+          className="flex flex-col items-center justify-center leading-none"
         >
-          LEADGEN<span className="text-primary">.</span>
+          <span className="pl-[0.3em] font-mono text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+            TAK
+          </span>
+          <span className="mt-0.5 font-heading text-xl font-bold tracking-tight">
+            LEADGEN<span className="text-primary">.</span>
+          </span>
         </Link>
         <nav className="flex items-stretch gap-6 text-sm">
           {RIGHT_NAV.map(renderLink)}
