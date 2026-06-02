@@ -5,6 +5,7 @@ import {
   campaign,
   lead,
   outreach,
+  projectMeta,
   type LeadStatus,
 } from "./schema";
 
@@ -178,6 +179,17 @@ export async function listCalendarEvents() {
 export type CalendarEventItem = Awaited<
   ReturnType<typeof listCalendarEvents>
 >[number];
+
+// Lokální data k Vercel projektům (ceny, poznámky).
+export async function listProjectMeta() {
+  return db.query.projectMeta.findMany();
+}
+
+export async function getProjectMeta(vercelProjectId: string) {
+  return db.query.projectMeta.findFirst({
+    where: eq(projectMeta.vercelProjectId, vercelProjectId),
+  });
+}
 
 // Nadcházející události (od teď, nehotové) — pro dashboard.
 export async function getUpcomingEvents(limit = 5) {

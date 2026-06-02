@@ -254,6 +254,24 @@ export const calendarEvent = pgTable("calendar_event", {
     .$onUpdate(() => new Date()),
 });
 
+// project_meta — lokální data k Vercel projektu (ceny, poznámky),
+// klíčované Vercel project id. Živá data (stav deploye) jdou z Vercel API.
+export const projectMeta = pgTable("project_meta", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  vercelProjectId: text("vercel_project_id").notNull().unique(),
+  name: text("name"),
+  buildPrice: integer("build_price"), // výrobní cena (Kč)
+  monthlyPrice: integer("monthly_price"), // cena za měsíční správu (Kč)
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
 // telegram_state — krátkodobý stav konverzace bota, klíčovaný chat_id.
 // mode='await_edit' = bot čeká na text s instrukcí k úpravě draftu.
 export const telegramState = pgTable("telegram_state", {
@@ -358,6 +376,7 @@ export type NewOutreach = typeof outreach.$inferInsert;
 export type Activity = typeof activity.$inferSelect;
 export type NewActivity = typeof activity.$inferInsert;
 export type TelegramState = typeof telegramState.$inferSelect;
+export type ProjectMeta = typeof projectMeta.$inferSelect;
 export type CalendarEvent = typeof calendarEvent.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
 export type EventKind = (typeof eventKindEnum.enumValues)[number];

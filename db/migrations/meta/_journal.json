@@ -36,6 +36,13 @@
       "when": 1780440431719,
       "tag": "0004_safe_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780443597651,
+      "tag": "0005_marvelous_triathlon",
+      "breakpoints": true
     }
   ]
 }

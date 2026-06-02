@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { Card } from "@/components/ui/card";
+import { listProjectMeta } from "@/db/queries";
 import { listVercelProjects, type VercelProject } from "@/lib/vercel";
 
 export const dynamic = "force-dynamic";
@@ -24,15 +26,8 @@ function stateLabel(state: string | null): string {
   return state ? map[state] ?? state.toLowerCase() : "—";
 }
 
-function ago(ms: number | null): string {
-  if (!ms) return "";
-  const diff = Date.now() - ms;
-  const min = Math.round(diff / 60000);
-  if (min < 60) return `před ${min} min`;
-  const h = Math.round(min / 60);
-  if (h < 48) return `před ${h} h`;
-  return `před ${Math.round(h / 24)} dny`;
-}
+const czk = (n: number | null | undefined) =>
+  n || n === 0 ? `${n.toLocaleString("cs-CZ")} Kč` : "—";
 
 export default async function ProjectsPage() {
   let projects: VercelProject[] | null = null;
@@ -42,13 +37,18 @@ export default async function ProjectsPage() {
   } catch (err) {
     error = (err as Error).message;
   }
+  const meta = await listProjectMeta();
+  const metaById = new Map(meta.map((m) => [m.vercelProjectId, m]));
+
+  const monthlyTotal = meta.reduce((s, m) => s + (m.monthlyPrice ?? 0), 0);
+  const buildTotal = meta.reduce((s, m) => s + (m.buildPrice ?? 0), 0);
 
   return (
     <PageContainer wide>
       <PageHeader
         eyebrow="Hosting"
         title="Projekty"
-        subtitle="Přehled projektů na Vercelu"
+        subtitle="Přehled projektů na Vercelu — ceny, správa, stav deploye"
       />
 
       {error ? (
@@ -57,73 +57,79 @@ export default async function ProjectsPage() {
           <p className="font-mono text-xs text-destructive">{error}</p>
           <p className="mt-2 text-muted-foreground">
             Vytvoř token na{" "}
-            <a
-              href="https://vercel.com/account/tokens"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary hover:underline"
-            >
+            <a href="https://vercel.com/account/tokens" target="_blank" rel="noreferrer" className="text-primary hover:underline">
               vercel.com/account/tokens
             </a>{" "}
             a vlož ho do <span className="font-mono">.env</span> jako{" "}
-            <span className="font-mono">VERCEL_TOKEN</span> (u týmu i{" "}
-            <span className="font-mono">VERCEL_TEAM_ID</span>).
+            <span className="font-mono">VERCEL_TOKEN</span>.
           </p>
         </Card>
-      ) : projects && projects.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-muted-foreground">
-          Žádné projekty na účtu.
-        </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {projects?.map((p) => (
-            <Card key={p.id} className="gap-3 p-5">
-              <div className="flex items-start justify-between gap-2">
-                <a
-                  href={p.dashboardUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-heading text-base font-semibold tracking-tight hover:text-primary"
-                >
-                  {p.name}
-                </a>
-                <span
-                  className={`shrink-0 border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateClass(
-                    p.state,
-                  )}`}
-                >
-                  {stateLabel(p.state)}
-                </span>
-              </div>
-
-              <dl className="space-y-1 font-mono text-xs text-muted-foreground">
-                <div className="flex justify-between gap-2">
-                  <dt>Framework</dt>
-                  <dd className="text-foreground">{p.framework ?? "—"}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt>Repozitář</dt>
-                  <dd className="truncate text-foreground">{p.repo ?? "—"}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt>Poslední deploy</dt>
-                  <dd className="text-foreground">{ago(p.deployedAt) || "—"}</dd>
-                </div>
-              </dl>
-
-              {p.url && (
-                <a
-                  href={p.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="truncate font-mono text-xs text-primary hover:underline"
-                >
-                  {p.url.replace(/^https?:\/\//, "")}
-                </a>
-              )}
+        <>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Card className="gap-1 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Projektů
+              </p>
+              <p className="font-mono text-2xl tabular-nums">{projects?.length ?? 0}</p>
             </Card>
-          ))}
-        </div>
+            <Card className="gap-1 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Měsíčně celkem
+              </p>
+              <p className="font-mono text-2xl tabular-nums text-primary">{czk(monthlyTotal)}</p>
+            </Card>
+            <Card className="gap-1 p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Výroba celkem
+              </p>
+              <p className="font-mono text-2xl tabular-nums">{czk(buildTotal)}</p>
+            </Card>
+          </div>
+
+          {projects && projects.length === 0 ? (
+            <Card className="p-8 text-center text-sm text-muted-foreground">
+              Žádné projekty na účtu.
+            </Card>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {projects?.map((p) => {
+                const m = metaById.get(p.id);
+                return (
+                  <Link key={p.id} href={`/projekty/${p.id}`}>
+                    <Card className="gap-3 p-5 transition-colors hover:border-primary/50">
+                      <div className="flex items-start justify-between gap-2">
+                        <h2 className="font-heading text-base font-semibold tracking-tight">
+                          {p.name}
+                        </h2>
+                        <span className={`shrink-0 border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateClass(p.state)}`}>
+                          {stateLabel(p.state)}
+                        </span>
+                      </div>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {p.framework ?? "—"}
+                        {p.repo ? ` · ${p.repo}` : ""}
+                      </p>
+                      <div className="flex items-end justify-between gap-2 border-t border-white/8 pt-3">
+                        <div>
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                            Měsíční správa
+                          </p>
+                          <p className="font-mono text-lg tabular-nums text-primary">
+                            {czk(m?.monthlyPrice)}
+                          </p>
+                        </div>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          výroba {czk(m?.buildPrice)}
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </PageContainer>
   );
