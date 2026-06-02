@@ -4,12 +4,19 @@ import { cn } from "@/lib/utils";
 export function PageContainer({
   children,
   wide = false,
+  full = false,
 }: {
   children: ReactNode;
   wide?: boolean;
+  full?: boolean;
 }) {
   return (
-    <div className={cn("mx-auto px-6 py-8", wide ? "max-w-360" : "max-w-6xl")}>
+    <div
+      className={cn(
+        "mx-auto px-6 py-8",
+        full ? "max-w-none" : wide ? "max-w-360" : "max-w-6xl",
+      )}
+    >
       {children}
     </div>
   );

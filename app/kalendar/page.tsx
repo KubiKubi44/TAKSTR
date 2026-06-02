@@ -10,7 +10,7 @@ export default async function CalendarPage() {
   const leadOptions = leads.map((l) => ({ id: l.id, businessName: l.businessName }));
 
   return (
-    <PageContainer wide>
+    <PageContainer full>
       <PageHeader
         eyebrow="Plán"
         title="Kalendář"
