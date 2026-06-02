@@ -127,6 +127,9 @@ export const lead = pgTable(
     source: leadSourceEnum("source").notNull(),
     // ruční leady (manual/telegram) skóre nemají → nullable
     score: integer("score"),
+    // interní příznaky z triáže bez změny schématu:
+    // websiteUnreachable (web nejede), socialOnly/noRealWebsite (jen FB/IG) atd.
+    flags: jsonb("flags").$type<Record<string, unknown>>().default({}).notNull(),
     status: leadStatusEnum("status").default("discovered").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

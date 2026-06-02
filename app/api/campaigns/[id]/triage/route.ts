@@ -25,29 +25,33 @@ export async function POST(
   });
 
   const scored: Array<{ leadId: string; businessName: string; score: number }> = [];
-  const failed: Array<{ leadId: string; businessName: string; error: string }> = [];
+  const social: Array<{ leadId: string; businessName: string }> = [];
+  const unreachable: Array<{ leadId: string; businessName: string; error: string }> = [];
 
   for (let i = 0; i < leads.length; i += CONCURRENCY) {
     const chunk = leads.slice(i, i + CONCURRENCY);
     await Promise.all(
       chunk.map(async (row) => {
-        try {
-          const result = await scoreLead({
-            leadId: row.id,
-            websiteUrl: row.websiteUrl,
-            fromStatus: row.status,
-            actor: "app",
-          });
+        const outcome = await scoreLead({
+          leadId: row.id,
+          websiteUrl: row.websiteUrl,
+          fromStatus: row.status,
+          actor: "app",
+          flags: row.flags,
+        });
+        if (outcome.kind === "scored") {
           scored.push({
             leadId: row.id,
             businessName: row.businessName,
-            score: result.score,
+            score: outcome.result.score,
           });
-        } catch (err) {
-          failed.push({
+        } else if (outcome.kind === "social") {
+          social.push({ leadId: row.id, businessName: row.businessName });
+        } else {
+          unreachable.push({
             leadId: row.id,
             businessName: row.businessName,
-            error: (err as Error).message,
+            error: outcome.error,
           });
         }
       }),
@@ -60,8 +64,10 @@ export async function POST(
     campaign: { id: camp.id, name: camp.name },
     candidates: leads.length,
     scored: scored.length,
-    failed: failed.length,
+    socialOnly: social.length,
+    unreachable: unreachable.length,
     topByScore: scored.slice(0, 20),
-    failures: failed,
+    leadsWithoutWebsite: social,
+    unreachableSites: unreachable,
   });
 }

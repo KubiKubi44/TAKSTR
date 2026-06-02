@@ -7,7 +7,7 @@ import {
   type DiscoveryFilters,
   type OverpassPlace,
 } from "@/lib/overpass";
-import { hostnameOf, normalizeWebsiteUrl } from "@/lib/url";
+import { hostnameOf, isSocialUrl, normalizeWebsiteUrl } from "@/lib/url";
 
 // POST /api/campaigns/:id/discover
 // Z campaign.filters zavolá Overpass, založí leady (discovered, source=osm),
@@ -59,6 +59,8 @@ export async function POST(
     const url = normalizeWebsiteUrl(p.website!);
     if (!url || placeByUrl.has(url)) continue;
     placeByUrl.set(url, p);
+    // „web" je jen sociální síť → lead bez vlastního webu (silný lead, jiný úhel)
+    const social = isSocialUrl(url);
     rows.push({
       campaignId: camp.id,
       businessName: p.name ?? hostnameOf(url) ?? url,
@@ -67,6 +69,7 @@ export async function POST(
       phone: p.phone,
       source: "osm",
       status: "discovered",
+      flags: social ? { socialOnly: true, noRealWebsite: true } : {},
     });
   }
 

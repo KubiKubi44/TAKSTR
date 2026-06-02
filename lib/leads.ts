@@ -8,6 +8,7 @@ import {
   type LeadStatus,
 } from "@/db/schema";
 import { triageWebsite, type TriageResult } from "./triage";
+import { isSocialUrl } from "./url";
 
 // Zapíše řádek do časové osy leadu.
 export async function logActivity(input: {
@@ -46,33 +47,82 @@ export async function updateLeadStatus(input: {
   });
 }
 
+// Výsledek triáže: buď oskórováno, nebo lead bez reálného webu
+// (jen sociální síť), nebo web nedostupný — poslední dva se neskórují,
+// jen označí příznakem k ručnímu posouzení.
+export type ScoreOutcome =
+  | { kind: "scored"; result: TriageResult }
+  | { kind: "social" }
+  | { kind: "unreachable"; error: string };
+
 // Triáž jednoho leadu: levné skóre z úvodní stránky → uloží score,
-// přepne na `scored` a zaloguje activity. Vrací výsledek triáže.
+// přepne na `scored` a zaloguje activity. Social/nedostupné jen oflagsuje.
 export async function scoreLead(input: {
   leadId: string;
   websiteUrl: string;
   fromStatus: LeadStatus;
   actor: ActivityActor;
-}): Promise<TriageResult> {
-  const result = await triageWebsite(input.websiteUrl);
+  flags?: Record<string, unknown>;
+}): Promise<ScoreOutcome> {
+  const existingFlags = input.flags ?? {};
 
-  await db
-    .update(lead)
-    .set({ score: result.score, status: "scored" })
-    .where(eq(lead.id, input.leadId));
+  // jen sociální síť → nemá vlastní web, klasická triáž nedává smysl
+  if (isSocialUrl(input.websiteUrl)) {
+    await db
+      .update(lead)
+      .set({ flags: { ...existingFlags, socialOnly: true, noRealWebsite: true } })
+      .where(eq(lead.id, input.leadId));
+    await logActivity({
+      leadId: input.leadId,
+      type: "note",
+      actor: input.actor,
+      payload: {
+        event: "triage_skipped",
+        reason: "social_only",
+        url: input.websiteUrl,
+      },
+    });
+    return { kind: "social" };
+  }
 
-  await logActivity({
-    leadId: input.leadId,
-    type: "status_change",
-    actor: input.actor,
-    payload: {
-      from: input.fromStatus,
-      to: "scored",
-      score: result.score,
-      breakdown: result.breakdown,
-      signals: result.signals,
-    },
-  });
-
-  return result;
+  try {
+    const result = await triageWebsite(input.websiteUrl);
+    await db
+      .update(lead)
+      .set({ score: result.score, status: "scored" })
+      .where(eq(lead.id, input.leadId));
+    await logActivity({
+      leadId: input.leadId,
+      type: "status_change",
+      actor: input.actor,
+      payload: {
+        from: input.fromStatus,
+        to: "scored",
+        score: result.score,
+        breakdown: result.breakdown,
+        signals: result.signals,
+      },
+    });
+    return { kind: "scored", result };
+  } catch (err) {
+    const message = (err as Error).message;
+    // web nedostupný → příznak (ne skóre), zůstává discovered k ručnímu pohledu
+    await db
+      .update(lead)
+      .set({
+        flags: {
+          ...existingFlags,
+          websiteUnreachable: true,
+          unreachableError: message,
+        },
+      })
+      .where(eq(lead.id, input.leadId));
+    await logActivity({
+      leadId: input.leadId,
+      type: "note",
+      actor: input.actor,
+      payload: { event: "triage_failed", reason: "unreachable", error: message },
+    });
+    return { kind: "unreachable", error: message };
+  }
 }

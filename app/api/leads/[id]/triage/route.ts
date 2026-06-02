@@ -15,23 +15,34 @@ export async function POST(
     return Response.json({ error: "Lead nenalezen" }, { status: 404 });
   }
 
-  try {
-    const result = await scoreLead({
-      leadId: row.id,
-      websiteUrl: row.websiteUrl,
-      fromStatus: row.status,
-      actor: "app",
-    });
+  const outcome = await scoreLead({
+    leadId: row.id,
+    websiteUrl: row.websiteUrl,
+    fromStatus: row.status,
+    actor: "app",
+    flags: row.flags,
+  });
+
+  if (outcome.kind === "scored") {
     return Response.json({
       leadId: row.id,
-      score: result.score,
-      breakdown: result.breakdown,
-      signals: result.signals,
+      outcome: "scored",
+      score: outcome.result.score,
+      breakdown: outcome.result.breakdown,
+      signals: outcome.result.signals,
     });
-  } catch (err) {
-    return Response.json(
-      { error: `Triáž selhala: ${(err as Error).message}` },
-      { status: 502 },
-    );
   }
+  if (outcome.kind === "social") {
+    return Response.json({
+      leadId: row.id,
+      outcome: "social",
+      note: "Lead bez vlastního webu (jen sociální síť) — označeno, neskórováno.",
+    });
+  }
+  return Response.json({
+    leadId: row.id,
+    outcome: "unreachable",
+    note: "Web nedostupný — označeno příznakem, neskórováno.",
+    error: outcome.error,
+  });
 }

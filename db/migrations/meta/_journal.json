@@ -15,6 +15,13 @@
       "when": 1780433100787,
       "tag": "0001_legal_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780434003066,
+      "tag": "0002_living_diamondback",
+      "breakpoints": true
     }
   ]
 }

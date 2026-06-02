@@ -25,3 +25,24 @@ export function hostnameOf(url: string): string | null {
     return null;
   }
 }
+
+// Domény, které nejsou „vlastní web" — POI je má často jako jediný odkaz.
+const SOCIAL_HOSTS = [
+  "facebook.com",
+  "fb.com",
+  "fb.me",
+  "instagram.com",
+  "twitter.com",
+  "x.com",
+  "tiktok.com",
+  "youtube.com",
+  "youtu.be",
+  "linkedin.com",
+];
+
+// True, když „web" leadu je ve skutečnosti jen profil na sociální síti.
+export function isSocialUrl(url: string): boolean {
+  const host = hostnameOf(url);
+  if (!host) return false;
+  return SOCIAL_HOSTS.some((s) => host === s || host.endsWith(`.${s}`));
+}
