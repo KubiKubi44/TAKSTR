@@ -67,7 +67,7 @@ export default async function LeadDetailPage({
   const latestDraft = lead.drafts.at(-1);
 
   return (
-    <PageContainer>
+    <PageContainer wide>
       <div className="mb-2">
         <Link href="/leady" className="font-mono text-xs text-muted-foreground hover:text-primary">
           ← Leady
