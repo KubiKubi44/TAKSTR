@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ActionButton } from "@/components/action-button";
+import { DeleteCampaignButton } from "@/components/delete-campaign-button";
 import { LeadsWorkspace } from "@/components/leads-workspace";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { Card } from "@/components/ui/card";
@@ -52,6 +53,11 @@ export default async function CampaignDetailPage({
             >
               Triáž všech
             </ActionButton>
+            <DeleteCampaignButton
+              campaignId={campaign.id}
+              campaignName={campaign.name}
+              leadCount={leads.length}
+            />
           </>
         }
       />
