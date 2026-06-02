@@ -18,13 +18,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-background/40 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 max-w-6xl items-stretch gap-8 px-6">
-        <Link
-          href="/"
-          className="flex items-center font-heading text-sm font-semibold tracking-tight"
-        >
-          LEADGEN<span className="text-primary">.</span>
-        </Link>
+      <div className="relative mx-auto flex h-14 max-w-6xl items-stretch px-6">
         <nav className="flex items-stretch gap-6 text-sm">
           {NAV.map((item) => (
             <Link
@@ -41,6 +35,12 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <Link
+          href="/"
+          className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center font-heading text-sm font-semibold tracking-tight"
+        >
+          LEADGEN<span className="text-primary">.</span>
+        </Link>
         <div className="ml-auto flex items-center font-mono text-xs text-muted-foreground">
           TB
         </div>

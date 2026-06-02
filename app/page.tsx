@@ -123,10 +123,10 @@ export default async function DashboardPage() {
         {upcoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">Žádné naplánované schůzky ani follow-upy.</p>
         ) : (
-          <ul className="grid gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="divide-y divide-white/8">
             {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 border-t border-white/8 py-2 text-sm">
-                <span className="w-28 shrink-0 font-mono text-xs text-muted-foreground">
+              <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="w-32 shrink-0 font-mono text-xs text-muted-foreground">
                   {new Date(e.startAt).toLocaleString("cs-CZ", {
                     day: "2-digit",
                     month: "2-digit",
