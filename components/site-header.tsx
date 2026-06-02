@@ -8,6 +8,7 @@ const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/kampane", label: "Kampaně" },
   { href: "/leady", label: "Leady" },
+  { href: "/kalendar", label: "Kalendář" },
 ];
 
 export function SiteHeader() {

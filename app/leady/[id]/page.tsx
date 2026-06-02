@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ActionButton } from "@/components/action-button";
 import { DraftGenerate } from "@/components/draft-generate";
 import { LeadFlags } from "@/components/lead-flags";
+import { NewEventDialog } from "@/components/new-event-dialog";
 import { NoteForm } from "@/components/note-form";
+import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-shell";
 import { ScoreBadge } from "@/components/score-badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -237,6 +239,50 @@ export default async function LeadDetailPage({
                 />
                 <Row k="Analyzováno" v={fmt(analysis.analyzedAt)} />
               </dl>
+            )}
+          </Card>
+
+          <Card className="gap-3 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-heading text-sm font-semibold">
+                Schůzky &amp; follow-upy
+              </h2>
+              <NewEventDialog
+                presetLeadId={lead.id}
+                presetLeadName={lead.businessName}
+                trigger={
+                  <Button size="sm" variant="outline">
+                    + Naplánovat
+                  </Button>
+                }
+              />
+            </div>
+            {lead.events.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Žádné naplánované události.
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {lead.events.map((e) => (
+                  <li key={e.id} className="flex items-center gap-2">
+                    <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
+                      {fmt(e.startAt)}
+                    </span>
+                    <span
+                      className={
+                        e.kind === "meeting"
+                          ? "font-mono text-[10px] uppercase tracking-wider text-primary"
+                          : "font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                      }
+                    >
+                      {e.kind === "meeting" ? "schůzka" : "follow-up"}
+                    </span>
+                    <span className={e.done ? "line-through opacity-60" : ""}>
+                      {e.title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </Card>
 

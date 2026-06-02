@@ -1,6 +1,7 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
+  calendarEvent,
   campaign,
   lead,
   outreach,
@@ -25,6 +26,9 @@ export async function getLeadWithRelations(id: string) {
       },
       activities: {
         orderBy: (a, { desc }) => desc(a.createdAt),
+      },
+      events: {
+        orderBy: (e, { asc }) => asc(e.startAt),
       },
     },
   });
@@ -162,3 +166,28 @@ export async function getCampaignResponseRates() {
 export type CampaignResponseRate = Awaited<
   ReturnType<typeof getCampaignResponseRates>
 >[number];
+
+// Všechny události kalendáře (s názvem leadu), řazené dle začátku.
+export async function listCalendarEvents() {
+  return db.query.calendarEvent.findMany({
+    with: { lead: { columns: { id: true, businessName: true } } },
+    orderBy: [asc(calendarEvent.startAt)],
+  });
+}
+
+export type CalendarEventItem = Awaited<
+  ReturnType<typeof listCalendarEvents>
+>[number];
+
+// Nadcházející události (od teď, nehotové) — pro dashboard.
+export async function getUpcomingEvents(limit = 5) {
+  return db.query.calendarEvent.findMany({
+    where: and(
+      gte(calendarEvent.startAt, new Date()),
+      eq(calendarEvent.done, false),
+    ),
+    with: { lead: { columns: { id: true, businessName: true } } },
+    orderBy: [asc(calendarEvent.startAt)],
+    limit,
+  });
+}

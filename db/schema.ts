@@ -70,6 +70,8 @@ export const campaignStatusEnum = pgEnum("campaign_status", [
   "done",
 ]);
 
+export const eventKindEnum = pgEnum("event_kind", ["meeting", "followup"]);
+
 // ─────────────────────────────────────────────────────────────
 // Tabulky
 // ─────────────────────────────────────────────────────────────
@@ -228,6 +230,30 @@ export const activity = pgTable("activity", {
     .notNull(),
 });
 
+// calendar_event — schůzky a follow-upy. Volitelně navázané na lead.
+export const calendarEvent = pgTable("calendar_event", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => appUser.id, { onDelete: "cascade" }),
+  leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
+  kind: eventKindEnum("kind").notNull(),
+  title: text("title").notNull(),
+  startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true }),
+  allDay: boolean("all_day").default(false).notNull(),
+  location: text("location"),
+  note: text("note"),
+  done: boolean("done").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
 // telegram_state — krátkodobý stav konverzace bota, klíčovaný chat_id.
 // mode='await_edit' = bot čeká na text s instrukcí k úpravě draftu.
 export const telegramState = pgTable("telegram_state", {
@@ -266,6 +292,18 @@ export const leadRelations = relations(lead, ({ one, many }) => ({
   drafts: many(emailDraft),
   outreach: many(outreach),
   activities: many(activity),
+  events: many(calendarEvent),
+}));
+
+export const calendarEventRelations = relations(calendarEvent, ({ one }) => ({
+  lead: one(lead, {
+    fields: [calendarEvent.leadId],
+    references: [lead.id],
+  }),
+  user: one(appUser, {
+    fields: [calendarEvent.userId],
+    references: [appUser.id],
+  }),
 }));
 
 export const siteAnalysisRelations = relations(siteAnalysis, ({ one }) => ({
@@ -320,6 +358,9 @@ export type NewOutreach = typeof outreach.$inferInsert;
 export type Activity = typeof activity.$inferSelect;
 export type NewActivity = typeof activity.$inferInsert;
 export type TelegramState = typeof telegramState.$inferSelect;
+export type CalendarEvent = typeof calendarEvent.$inferSelect;
+export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
+export type EventKind = (typeof eventKindEnum.enumValues)[number];
 
 // Union typy z enumů (např. "discovered" | "scored" | …)
 export type LeadSource = (typeof leadSourceEnum.enumValues)[number];
