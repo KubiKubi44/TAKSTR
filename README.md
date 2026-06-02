@@ -80,25 +80,44 @@ npm run dev
 
 App běží na <http://localhost:3000>.
 
-## 6. Telegram webhook (od Fáze 7)
+## 6. Telegram bot (Fáze 7)
 
-Telegram webhook potřebuje **veřejnou HTTPS adresu**. V lokálním vývoji použij
-tunel (např. [ngrok](https://ngrok.com) nebo `cloudflared`):
+Bot je vzdálené ovládání — schvaluješ a odesílíš drafty z mobilu. Nemá vlastní
+logiku, volá tytéž funkce jako web (`lib/pipeline.ts`).
+
+**a) Založ bota** přes [@BotFather](https://t.me/BotFather) (`/newbot`) → dostaneš
+`TELEGRAM_BOT_TOKEN`. Vymysli si náhodný `TELEGRAM_WEBHOOK_SECRET`. Obojí dej do `.env`.
+
+**b) Zjisti svoje `chat_id`** — napiš svému botovi a otevři
+`https://api.telegram.org/bot<TOKEN>/getUpdates`, nebo použij
+[@userinfobot](https://t.me/userinfobot). Vlož ho do `.env` jako
+`TELEGRAM_ALLOWED_CHAT_ID` a propiš do DB:
 
 ```bash
-ngrok http 3000
-# vznikne např. https://abcd-12-34.ngrok-free.app
+npm run db:seed   # seed nastaví app_user.telegram_chat_id z TELEGRAM_ALLOWED_CHAT_ID
 ```
 
-Webhook pak zaregistruješ na Telegram API (detailní skript přijde ve Fázi 7):
+> Bot reaguje **jen** na `chat_id`, které sedí na `app_user.telegram_chat_id`
+> (whitelist — přes bota jdou reálná odeslání mailů).
+
+**c) Veřejná HTTPS adresa** (webhook ji vyžaduje) — v dev použij tunel:
 
 ```bash
-curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -d "url=https://<tvuj-tunel>/api/telegram/webhook" \
-  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+ngrok http 3000   # → např. https://abcd-12-34.ngrok-free.app
 ```
 
-Bot reaguje jen na `chat_id` z `TELEGRAM_ALLOWED_CHAT_ID` (whitelist).
+**d) Zaregistruj webhook:**
+
+```bash
+npm run telegram:webhook -- https://<tvuj-tunel>
+```
+
+**Použití bota:**
+- Web vygeneruje draft → přijde ti do Telegramu zpráva s tlačítky
+  **✅ Odeslat / ✏️ Upravit / ❌ Zahodit**.
+- ✏️ → bot se zeptá „co upravit?", tvoje další zpráva = instrukce → nová verze.
+- Pošleš-li botovi **URL**, založí z ní lead (`source = telegram`), zanalyzuje
+  a vygeneruje draft (přeskočí triáž).
 
 ## Struktura projektu
 
@@ -113,11 +132,11 @@ lib/             # places, triage, analyzer, claude, resend, telegram, utils
 
 Aplikace se staví fázovaně; po každé fázi commit + krátké shrnutí.
 
-0. **Scaffold** — běžící prázdná appka, závislosti, napojení DB ← *hotovo*
-1. Datový model (7 tabulek, enumy, relations, migrace, seed)
-2. Discovery + triáž (Places API, levné skóre)
-3. Hloubková analýza (cheerio, site_analysis)
-4. Generování draftu (Claude API, verzování)
-5. App UI (dark editorial)
-6. Odesílání + tracking (Resend, metriky)
-7. Telegram bot (webhook, schvalování z mobilu)
+0. ✅ Scaffold — běžící appka, závislosti, napojení DB
+1. ✅ Datový model (7 tabulek, enumy, relations, migrace, seed)
+2. ✅ Discovery + triáž (**OpenStreetMap / Overpass**, levné skóre)
+3. ✅ Hloubková analýza (cheerio, site_analysis)
+4. ✅ Generování draftu (Claude API, verzování)
+5. ✅ App UI (glass / dark)
+6. ✅ Odesílání + tracking (Resend, metriky)
+7. ✅ Telegram bot (webhook, schvalování z mobilu)

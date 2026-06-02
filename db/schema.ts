@@ -228,6 +228,19 @@ export const activity = pgTable("activity", {
     .notNull(),
 });
 
+// telegram_state — krátkodobý stav konverzace bota, klíčovaný chat_id.
+// mode='await_edit' = bot čeká na text s instrukcí k úpravě draftu.
+export const telegramState = pgTable("telegram_state", {
+  chatId: text("chat_id").primaryKey(),
+  mode: text("mode"), // null | "await_edit"
+  leadId: uuid("lead_id").references(() => lead.id, { onDelete: "cascade" }),
+  draftId: uuid("draft_id"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
 // ─────────────────────────────────────────────────────────────
 // Relations — aby šel lead načíst se všemi vazbami jedním dotazem
 // ─────────────────────────────────────────────────────────────
@@ -306,6 +319,7 @@ export type Outreach = typeof outreach.$inferSelect;
 export type NewOutreach = typeof outreach.$inferInsert;
 export type Activity = typeof activity.$inferSelect;
 export type NewActivity = typeof activity.$inferInsert;
+export type TelegramState = typeof telegramState.$inferSelect;
 
 // Union typy z enumů (např. "discovered" | "scored" | …)
 export type LeadSource = (typeof leadSourceEnum.enumValues)[number];
