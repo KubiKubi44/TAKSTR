@@ -13,7 +13,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "mx-auto px-6 py-8",
+        "mx-auto w-full px-6 py-8",
         full ? "max-w-none" : wide ? "max-w-360" : "max-w-6xl",
       )}
     >
