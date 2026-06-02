@@ -130,3 +130,35 @@ export async function getDashboardMetrics() {
     won: statusCounts.won,
   };
 }
+
+// Response rate po kampaních (odesláno vs. odpovědi).
+export async function getCampaignResponseRates() {
+  const rows = await db
+    .select({
+      campaignId: campaign.id,
+      name: campaign.name,
+      sent: count(sql`case when ${outreach.direction} = 'outbound' then 1 end`),
+      replies: count(sql`case when ${outreach.direction} = 'inbound' then 1 end`),
+    })
+    .from(campaign)
+    .leftJoin(lead, eq(lead.campaignId, campaign.id))
+    .leftJoin(outreach, eq(outreach.leadId, lead.id))
+    .groupBy(campaign.id, campaign.name, campaign.createdAt)
+    .orderBy(desc(campaign.createdAt));
+
+  return rows.map((r) => {
+    const sent = Number(r.sent);
+    const replies = Number(r.replies);
+    return {
+      campaignId: r.campaignId,
+      name: r.name,
+      sent,
+      replies,
+      rate: sent > 0 ? replies / sent : 0,
+    };
+  });
+}
+
+export type CampaignResponseRate = Awaited<
+  ReturnType<typeof getCampaignResponseRates>
+>[number];

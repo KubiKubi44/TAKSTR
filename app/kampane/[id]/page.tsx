@@ -5,7 +5,7 @@ import { DeleteCampaignButton } from "@/components/delete-campaign-button";
 import { LeadsWorkspace } from "@/components/leads-workspace";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { Card } from "@/components/ui/card";
-import { getCampaignWithLeads } from "@/db/queries";
+import { getCampaignResponseRates, getCampaignWithLeads } from "@/db/queries";
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
 import type { LeadStatus } from "@/db/schema";
 
@@ -26,6 +26,9 @@ export default async function CampaignDetailPage({
     return acc;
   }, {});
   const activeCounts = LEAD_STATUS_ORDER.filter((s) => counts[s]);
+
+  const rates = await getCampaignResponseRates();
+  const rate = rates.find((r) => r.campaignId === campaign.id);
 
   return (
     <PageContainer>
@@ -74,6 +77,16 @@ export default async function CampaignDetailPage({
               </span>
             </div>
           ))}
+          {rate && rate.sent > 0 && (
+            <div className="flex items-center gap-2 border-l border-border pl-6">
+              <span className="font-mono text-lg tabular-nums text-primary">
+                {Math.round(rate.rate * 100)} %
+              </span>
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                response ({rate.replies}/{rate.sent})
+              </span>
+            </div>
+          )}
         </Card>
       )}
 

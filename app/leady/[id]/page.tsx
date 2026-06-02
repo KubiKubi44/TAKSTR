@@ -7,7 +7,6 @@ import { NoteForm } from "@/components/note-form";
 import { PageContainer } from "@/components/page-shell";
 import { ScoreBadge } from "@/components/score-badge";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getLeadWithRelations } from "@/db/queries";
@@ -108,12 +107,26 @@ export default async function LeadDetailPage({
             Schválit
           </ActionButton>
         )}
-        <Button size="sm" variant="ghost" disabled title="Fáze 6 — Resend">
-          Odeslat
-        </Button>
-        <Button size="sm" variant="ghost" disabled title="Fáze 6">
+        {latestDraft && (
+          <ActionButton
+            endpoint={`/api/leads/${lead.id}/send`}
+            successMessage="Odesláno"
+            variant="default"
+            disabled={latestDraft.status === "sent" || latestDraft.status === "discarded"}
+            confirm={`Odeslat draft v${latestDraft.version} na ${
+              latestDraft.recipientEmail ?? lead.contactEmail ?? "(chybí příjemce!)"
+            }? E-mail reálně odejde přes Resend.`}
+          >
+            Odeslat
+          </ActionButton>
+        )}
+        <ActionButton
+          endpoint={`/api/leads/${lead.id}/replied`}
+          successMessage="Označeno jako odpovězeno"
+          disabled={lead.status !== "sent"}
+        >
           Označit odpovězeno
-        </Button>
+        </ActionButton>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">

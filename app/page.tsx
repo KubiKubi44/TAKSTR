@@ -3,7 +3,11 @@ import { PageContainer, PageHeader } from "@/components/page-shell";
 import { ScoreBadge } from "@/components/score-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
-import { getDashboardMetrics, listLeads } from "@/db/queries";
+import {
+  getCampaignResponseRates,
+  getDashboardMetrics,
+  listLeads,
+} from "@/db/queries";
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
 
 function Metric({
@@ -31,6 +35,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const m = await getDashboardMetrics();
   const leads = await listLeads();
+  const campaignRates = await getCampaignResponseRates();
   const topLeads = leads.filter((l) => l.score !== null).slice(0, 8);
   const maxFunnel = Math.max(1, ...Object.values(m.statusCounts));
 
@@ -105,6 +110,40 @@ export default async function DashboardPage() {
           )}
         </Card>
       </div>
+
+      <Card className="mt-6 p-5">
+        <h2 className="mb-4 font-heading text-sm font-semibold">
+          Response rate po kampaních
+        </h2>
+        {campaignRates.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Zatím žádné kampaně.</p>
+        ) : (
+          <div className="space-y-2">
+            {campaignRates.map((c) => (
+              <div key={c.campaignId} className="flex items-center gap-3 text-sm">
+                <Link
+                  href={`/kampane/${c.campaignId}`}
+                  className="w-48 truncate hover:text-primary"
+                >
+                  {c.name}
+                </Link>
+                <div className="h-2 flex-1 overflow-hidden bg-muted">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${Math.round(c.rate * 100)}%` }}
+                  />
+                </div>
+                <span className="w-28 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                  {c.replies}/{c.sent}{" "}
+                  <span className="text-foreground">
+                    {c.sent > 0 ? `${Math.round(c.rate * 100)} %` : "—"}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </PageContainer>
   );
 }
