@@ -174,7 +174,7 @@ export function LeadsWorkspace({
       </div>
 
       {view === "table" ? (
-        <div className="border border-border">
+        <div className="glass overflow-hidden rounded-2xl">
           <Table>
             <TableHeader>
               <TableRow>
@@ -264,7 +264,7 @@ export function LeadsWorkspace({
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/lead", l.id)}
                       className={cn(
-                        "cursor-grab border border-border bg-card p-2 active:cursor-grabbing",
+                        "glass cursor-grab rounded-xl p-2 transition-shadow hover:shadow-lg active:cursor-grabbing",
                       )}
                     >
                       <Link href={`/leady/${l.id}`} className="block text-sm hover:text-primary">
