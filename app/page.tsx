@@ -56,6 +56,51 @@ export default async function DashboardPage() {
         <Metric label="Zakázky" value={String(m.won)} />
       </div>
 
+      <Card className="mt-8 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-heading text-sm font-semibold">Nadcházející</h2>
+          <Link href="/kalendar" className="font-mono text-xs text-muted-foreground hover:text-primary">
+            Kalendář →
+          </Link>
+        </div>
+        {upcoming.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Žádné naplánované schůzky ani follow-upy.</p>
+        ) : (
+          <ul className="divide-y divide-white/8">
+            {upcoming.map((e) => (
+              <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="w-32 shrink-0 font-mono text-xs text-muted-foreground">
+                  {new Date(e.startAt).toLocaleString("cs-CZ", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+                <span
+                  className={
+                    e.kind === "meeting"
+                      ? "font-mono text-[10px] uppercase tracking-wider text-primary"
+                      : "font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                  }
+                >
+                  {e.kind === "meeting" ? "schůzka" : "follow-up"}
+                </span>
+                <span className="flex-1 truncate">{e.title}</span>
+                {e.lead && (
+                  <Link
+                    href={`/leady/${e.lead.id}`}
+                    className="shrink-0 truncate text-xs text-muted-foreground hover:text-primary"
+                  >
+                    {e.lead.businessName}
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="mb-4 font-heading text-sm font-semibold">
@@ -112,51 +157,6 @@ export default async function DashboardPage() {
           )}
         </Card>
       </div>
-
-      <Card className="mt-6 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-heading text-sm font-semibold">Nadcházející</h2>
-          <Link href="/kalendar" className="font-mono text-xs text-muted-foreground hover:text-primary">
-            Kalendář →
-          </Link>
-        </div>
-        {upcoming.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Žádné naplánované schůzky ani follow-upy.</p>
-        ) : (
-          <ul className="divide-y divide-white/8">
-            {upcoming.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
-                <span className="w-32 shrink-0 font-mono text-xs text-muted-foreground">
-                  {new Date(e.startAt).toLocaleString("cs-CZ", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-                <span
-                  className={
-                    e.kind === "meeting"
-                      ? "font-mono text-[10px] uppercase tracking-wider text-primary"
-                      : "font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-                  }
-                >
-                  {e.kind === "meeting" ? "schůzka" : "follow-up"}
-                </span>
-                <span className="flex-1 truncate">{e.title}</span>
-                {e.lead && (
-                  <Link
-                    href={`/leady/${e.lead.id}`}
-                    className="shrink-0 truncate text-xs text-muted-foreground hover:text-primary"
-                  >
-                    {e.lead.businessName}
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
 
       <Card className="mt-6 p-5">
         <h2 className="mb-4 font-heading text-sm font-semibold">
