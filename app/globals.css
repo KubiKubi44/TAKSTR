@@ -6,23 +6,34 @@
 
 /* Apple „Liquid Glass" — průsvitný frosted panel s blurem a světelným okrajem. */
 @utility glass {
-  background-color: color-mix(in oklch, var(--card) 58%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.1);
+  /* sheen (světlo přejíždějící horní část) + průsvitná výplň */
+  background-image:
+    linear-gradient(to bottom, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0) 42%),
+    linear-gradient(180deg,
+      color-mix(in oklch, var(--card) 50%, transparent),
+      color-mix(in oklch, var(--card) 64%, transparent));
+  -webkit-backdrop-filter: blur(24px) saturate(190%) brightness(1.04);
+  backdrop-filter: blur(24px) saturate(190%) brightness(1.04);
+  border: 1px solid oklch(1 0 0 / 0.12);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.08),
-    0 10px 30px -12px oklch(0 0 0 / 0.55);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.2), /* světelná horní hrana */
+    inset 0 -24px 48px -36px oklch(0 0 0 / 0.55), /* hloubka u dna */
+    0 16px 44px -18px oklch(0 0 0 / 0.6); /* plovoucí stín */
 }
 
 @utility glass-strong {
-  background-color: color-mix(in oklch, var(--popover) 70%, transparent);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.12);
+  background-image:
+    linear-gradient(to bottom, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 40%),
+    linear-gradient(180deg,
+      color-mix(in oklch, var(--popover) 62%, transparent),
+      color-mix(in oklch, var(--popover) 76%, transparent));
+  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(32px) saturate(200%) brightness(1.05);
+  border: 1px solid oklch(1 0 0 / 0.14);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.1),
-    0 20px 50px -16px oklch(0 0 0 / 0.7);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
+    inset 0 -28px 56px -40px oklch(0 0 0 / 0.6),
+    0 24px 60px -18px oklch(0 0 0 / 0.7);
 }
 
 @theme inline {
