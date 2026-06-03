@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ActionButton } from "@/components/action-button";
+import { CreateProjectButton } from "@/components/create-project-button";
 import { DraftGenerate } from "@/components/draft-generate";
 import { LeadFlags } from "@/components/lead-flags";
 import { NewEventDialog } from "@/components/new-event-dialog";
@@ -45,6 +46,7 @@ function activityText(type: string, payload: Record<string, unknown>): string {
     if (event === "triage_failed") return "Triáž selhala (web nedostupný)";
     if (event === "analyze_failed") return "Analýza selhala (web nedostupný)";
     if (event === "draft_approved") return `Draft v${payload.version} schválen`;
+    if (event === "project_created") return "Založen projekt z leadu";
     return "Poznámka";
   }
   if (type === "email_sent") return "E-mail odeslán";
@@ -129,6 +131,8 @@ export default async function LeadDetailPage({
         >
           Označit odpovězeno
         </ActionButton>
+        <div className="mx-1 h-5 w-px self-center bg-border" />
+        <CreateProjectButton leadId={lead.id} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">

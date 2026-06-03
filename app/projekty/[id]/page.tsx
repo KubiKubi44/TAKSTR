@@ -57,6 +57,36 @@ function PricesCard({
   );
 }
 
+function ClientCard({
+  meta,
+}: {
+  meta: {
+    clientName: string | null;
+    clientEmail: string | null;
+    clientPhone: string | null;
+    leadId: string | null;
+  } | null | undefined;
+}) {
+  if (!meta) return null;
+  const has = meta.clientName || meta.clientEmail || meta.clientPhone || meta.leadId;
+  if (!has) return null;
+  return (
+    <Card className="gap-2 p-5">
+      <h2 className="font-heading text-sm font-semibold">Klient</h2>
+      <dl className="space-y-1 text-sm">
+        {meta.clientName && <Row k="Jméno" v={meta.clientName} />}
+        {meta.clientEmail && <Row k="E-mail" v={meta.clientEmail} />}
+        {meta.clientPhone && <Row k="Telefon" v={meta.clientPhone} />}
+      </dl>
+      {meta.leadId && (
+        <Link href={`/leady/${meta.leadId}`} className="font-mono text-xs text-primary hover:underline">
+          ← původní lead
+        </Link>
+      )}
+    </Card>
+  );
+}
+
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -98,8 +128,9 @@ export default async function ProjectDetailPage({
             />
           </div>
         </div>
-        <div className="max-w-xl">
+        <div className="grid gap-6 lg:grid-cols-2">
           <PricesCard projectId={meta.id} meta={meta} />
+          <ClientCard meta={meta} />
         </div>
       </PageContainer>
     );
@@ -165,6 +196,7 @@ export default async function ProjectDetailPage({
         <PricesCard projectId={project.id} meta={meta} />
 
         <div className="space-y-6">
+          <ClientCard meta={meta} />
           <Card className="gap-2 p-5">
             <h2 className="mb-2 font-heading text-sm font-semibold">Vercel</h2>
             <dl className="space-y-1 text-sm">

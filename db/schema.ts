@@ -265,6 +265,12 @@ export const projectMeta = pgTable("project_meta", {
   buildPrice: integer("build_price"), // výrobní cena (Kč)
   monthlyPrice: integer("monthly_price"), // cena za měsíční správu (Kč)
   note: text("note"),
+  // klient / kontakt
+  clientName: text("client_name"),
+  clientEmail: text("client_email"),
+  clientPhone: text("client_phone"),
+  // odkaz na lead, ze kterého projekt vznikl
+  leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
   hidden: boolean("hidden").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
