@@ -195,6 +195,16 @@ export async function getProjectMetaById(id: string) {
   return db.query.projectMeta.findFirst({ where: eq(projectMeta.id, id) });
 }
 
+// Opakovaný příjem ze správy (z aktivních = neskrytých projektů).
+export async function getProjectRevenue() {
+  const rows = await db.query.projectMeta.findMany();
+  const active = rows.filter((r) => !r.hidden);
+  const monthly = active.reduce((s, r) => s + (r.monthlyPrice ?? 0), 0);
+  const buildTotal = active.reduce((s, r) => s + (r.buildPrice ?? 0), 0);
+  const paying = active.filter((r) => (r.monthlyPrice ?? 0) > 0).length;
+  return { monthly, annual: monthly * 12, buildTotal, paying };
+}
+
 // Nadcházející události (od teď, nehotové) — pro dashboard.
 export async function getUpcomingEvents(limit = 5) {
   return db.query.calendarEvent.findMany({

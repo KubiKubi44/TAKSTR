@@ -113,14 +113,18 @@ export default async function ProjectsPage({
         </Card>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card className="gap-1 p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Projektů</p>
           <p className="font-mono text-2xl tabular-nums">{active.length}</p>
         </Card>
         <Card className="gap-1 p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíčně celkem</p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíčně · MRR</p>
           <p className="font-mono text-2xl tabular-nums text-primary">{czk(monthlyTotal)}</p>
+        </Card>
+        <Card className="gap-1 p-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Ročně · ARR</p>
+          <p className="font-mono text-2xl tabular-nums text-primary">{czk(monthlyTotal * 12)}</p>
         </Card>
         <Card className="gap-1 p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Výroba celkem</p>

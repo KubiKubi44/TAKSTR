@@ -6,9 +6,12 @@ import { Card } from "@/components/ui/card";
 import {
   getCampaignResponseRates,
   getDashboardMetrics,
+  getProjectRevenue,
   getUpcomingEvents,
   listLeads,
 } from "@/db/queries";
+
+const czk = (n: number) => `${n.toLocaleString("cs-CZ")} Kč`;
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
 
 function Metric({
@@ -37,6 +40,7 @@ export default async function DashboardPage() {
   const m = await getDashboardMetrics();
   const leads = await listLeads();
   const campaignRates = await getCampaignResponseRates();
+  const revenue = await getProjectRevenue();
   const upcoming = await getUpcomingEvents(6);
   const topLeads = leads.filter((l) => l.score !== null).slice(0, 8);
   const maxFunnel = Math.max(1, ...Object.values(m.statusCounts));
@@ -56,7 +60,32 @@ export default async function DashboardPage() {
         <Metric label="Zakázky" value={String(m.won)} />
       </div>
 
-      <Card className="mt-8 p-5">
+      <Card className="mt-8 flex flex-row flex-wrap items-center justify-between gap-4 p-5">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+            Příjem ze správy webů
+          </p>
+          <div className="mt-2 flex items-end gap-8">
+            <div>
+              <p className="font-mono text-3xl tabular-nums text-primary">{czk(revenue.monthly)}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                měsíčně · MRR
+              </p>
+            </div>
+            <div>
+              <p className="font-mono text-3xl tabular-nums">{czk(revenue.annual)}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                ročně · ARR
+              </p>
+            </div>
+          </div>
+        </div>
+        <Link href="/projekty" className="font-mono text-xs text-muted-foreground hover:text-primary">
+          {revenue.paying} projektů ve správě →
+        </Link>
+      </Card>
+
+      <Card className="mt-6 p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-heading text-sm font-semibold">Nadcházející</h2>
           <Link href="/kalendar" className="font-mono text-xs text-muted-foreground hover:text-primary">
