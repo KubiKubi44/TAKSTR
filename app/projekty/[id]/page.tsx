@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ClientForm } from "@/components/client-form";
 import { PageContainer } from "@/components/page-shell";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { ProjectMetaForm } from "@/components/project-meta-form";
@@ -58,31 +59,40 @@ function PricesCard({
 }
 
 function ClientCard({
+  projectId,
+  showUrl,
   meta,
 }: {
+  projectId: string;
+  showUrl: boolean;
   meta: {
     clientName: string | null;
     clientEmail: string | null;
     clientPhone: string | null;
+    url: string | null;
     leadId: string | null;
   } | null | undefined;
 }) {
-  if (!meta) return null;
-  const has = meta.clientName || meta.clientEmail || meta.clientPhone || meta.leadId;
-  if (!has) return null;
   return (
-    <Card className="gap-2 p-5">
-      <h2 className="font-heading text-sm font-semibold">Klient</h2>
-      <dl className="space-y-1 text-sm">
-        {meta.clientName && <Row k="Jméno" v={meta.clientName} />}
-        {meta.clientEmail && <Row k="E-mail" v={meta.clientEmail} />}
-        {meta.clientPhone && <Row k="Telefon" v={meta.clientPhone} />}
-      </dl>
-      {meta.leadId && (
-        <Link href={`/leady/${meta.leadId}`} className="font-mono text-xs text-primary hover:underline">
-          ← původní lead
-        </Link>
-      )}
+    <Card className="gap-3 p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-heading text-sm font-semibold">Klient</h2>
+        {meta?.leadId && (
+          <Link href={`/leady/${meta.leadId}`} className="font-mono text-xs text-primary hover:underline">
+            ← původní lead
+          </Link>
+        )}
+      </div>
+      <ClientForm
+        projectId={projectId}
+        showUrl={showUrl}
+        initial={{
+          clientName: meta?.clientName ?? null,
+          clientEmail: meta?.clientEmail ?? null,
+          clientPhone: meta?.clientPhone ?? null,
+          url: meta?.url ?? null,
+        }}
+      />
     </Card>
   );
 }
@@ -130,7 +140,7 @@ export default async function ProjectDetailPage({
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <PricesCard projectId={meta.id} meta={meta} />
-          <ClientCard meta={meta} />
+          <ClientCard projectId={meta.id} showUrl meta={meta} />
         </div>
       </PageContainer>
     );
@@ -196,7 +206,7 @@ export default async function ProjectDetailPage({
         <PricesCard projectId={project.id} meta={meta} />
 
         <div className="space-y-6">
-          <ClientCard meta={meta} />
+          <ClientCard projectId={project.id} showUrl={false} meta={meta} />
           <Card className="gap-2 p-5">
             <h2 className="mb-2 font-heading text-sm font-semibold">Vercel</h2>
             <dl className="space-y-1 text-sm">

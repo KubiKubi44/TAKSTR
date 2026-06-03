@@ -41,12 +41,21 @@ function stateLabel(state: string | null): string {
 const czk = (n: number | null | undefined) =>
   n || n === 0 ? `${n.toLocaleString("cs-CZ")} Kč` : "—";
 
+const SORTS: Record<string, string> = {
+  monthly: "Měsíčně",
+  build: "Výroba",
+  name: "Název",
+  state: "Stav",
+};
+
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ hidden?: string }>;
+  searchParams: Promise<{ hidden?: string; sort?: string }>;
 }) {
-  const showHidden = (await searchParams).hidden === "1";
+  const sp = await searchParams;
+  const showHidden = sp.hidden === "1";
+  const sort = sp.sort && sp.sort in SORTS ? sp.sort : "monthly";
 
   let vercelError: string | null = null;
   let vercel: Awaited<ReturnType<typeof listVercelProjects>> = [];
@@ -92,7 +101,12 @@ export default async function ProjectsPage({
 
   const active = display.filter((d) => !d.hidden);
   const hiddenCount = display.length - active.length;
-  const shown = showHidden ? display.filter((d) => d.hidden) : active;
+  const shown = (showHidden ? display.filter((d) => d.hidden) : active).sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name, "cs");
+    if (sort === "build") return (b.buildPrice ?? 0) - (a.buildPrice ?? 0);
+    if (sort === "state") return (a.state ?? "zzz").localeCompare(b.state ?? "zzz");
+    return (b.monthlyPrice ?? 0) - (a.monthlyPrice ?? 0);
+  });
 
   const monthlyTotal = active.reduce((s, d) => s + (d.monthlyPrice ?? 0), 0);
   const buildTotal = active.reduce((s, d) => s + (d.buildPrice ?? 0), 0);
@@ -132,19 +146,29 @@ export default async function ProjectsPage({
         </Card>
       </div>
 
-      <div className="mb-3 flex items-center gap-4 font-mono text-xs">
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs">
         <Link
-          href="/projekty"
+          href={`/projekty?sort=${sort}`}
           className={showHidden ? "text-muted-foreground hover:text-primary" : "text-foreground"}
         >
           Aktivní ({active.length})
         </Link>
         <Link
-          href="/projekty?hidden=1"
+          href={`/projekty?hidden=1&sort=${sort}`}
           className={showHidden ? "text-foreground" : "text-muted-foreground hover:text-primary"}
         >
           Skryté ({hiddenCount})
         </Link>
+        <span className="ml-2 text-muted-foreground/60">řadit:</span>
+        {Object.entries(SORTS).map(([key, label]) => (
+          <Link
+            key={key}
+            href={`/projekty?sort=${key}${showHidden ? "&hidden=1" : ""}`}
+            className={sort === key ? "text-primary" : "text-muted-foreground hover:text-foreground"}
+          >
+            {label}
+          </Link>
+        ))}
       </div>
 
       {shown.length === 0 ? (

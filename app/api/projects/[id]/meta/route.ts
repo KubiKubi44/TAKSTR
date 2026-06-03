@@ -2,55 +2,42 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { projectMeta } from "@/db/schema";
 
-// POST /api/projects/:id/meta — uloží ceny a poznámku k Vercel projektu.
-// :id = Vercel project id. Tělo: { buildPrice?, monthlyPrice?, note?, name? }
+const toInt = (v: unknown): number | null => {
+  if (v === "" || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n) : null;
+};
+const toText = (v: unknown): string | null =>
+  typeof v === "string" ? v.trim() || null : null;
+
+// POST /api/projects/:id/meta — uloží jen ta pole, která dorazí (ceny/poznámka,
+// klient, url, název). Díky tomu se různé formuláře navzájem nepřepisují.
+// :id = Vercel project id (prj_…) nebo uuid ručního projektu.
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const body = (await req.json().catch(() => null)) as {
-    buildPrice?: unknown;
-    monthlyPrice?: unknown;
-    note?: unknown;
-    name?: unknown;
-    url?: string;
-  } | null;
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body) return Response.json({ error: "Neplatné tělo" }, { status: 400 });
 
-  const toInt = (v: unknown): number | null => {
-    if (v === "" || v === null || v === undefined) return null;
-    const n = Number(v);
-    return Number.isFinite(n) ? Math.round(n) : null;
-  };
-
-  // jméno (override) měníme jen když přijde — ať uložení cen nepřepíše přezdívku
-  const nameSet = typeof body?.name === "string" ? { name: body.name } : {};
-  const fields = {
-    buildPrice: toInt(body?.buildPrice),
-    monthlyPrice: toInt(body?.monthlyPrice),
-    note: typeof body?.note === "string" ? body.note : null,
-  };
+  const set: Record<string, unknown> = { updatedAt: new Date() };
+  if ("name" in body) set.name = typeof body.name === "string" ? body.name : null;
+  if ("url" in body) set.url = toText(body.url);
+  if ("buildPrice" in body) set.buildPrice = toInt(body.buildPrice);
+  if ("monthlyPrice" in body) set.monthlyPrice = toInt(body.monthlyPrice);
+  if ("note" in body) set.note = typeof body.note === "string" ? body.note : null;
+  if ("clientName" in body) set.clientName = toText(body.clientName);
+  if ("clientEmail" in body) set.clientEmail = toText(body.clientEmail);
+  if ("clientPhone" in body) set.clientPhone = toText(body.clientPhone);
 
   if (id.startsWith("prj_")) {
-    // Vercel projekt → upsert podle vercel_project_id
     await db
       .insert(projectMeta)
-      .values({ vercelProjectId: id, ...fields, ...nameSet })
-      .onConflictDoUpdate({
-        target: projectMeta.vercelProjectId,
-        set: { ...fields, ...nameSet, updatedAt: new Date() },
-      });
+      .values({ vercelProjectId: id, ...set })
+      .onConflictDoUpdate({ target: projectMeta.vercelProjectId, set });
   } else {
-    // ruční projekt → update podle uuid (případně i url)
-    await db
-      .update(projectMeta)
-      .set({
-        ...fields,
-        ...nameSet,
-        url: typeof body?.url === "string" ? body.url.trim() || null : undefined,
-        updatedAt: new Date(),
-      })
-      .where(eq(projectMeta.id, id));
+    await db.update(projectMeta).set(set).where(eq(projectMeta.id, id));
   }
 
   return Response.json({ ok: true });
