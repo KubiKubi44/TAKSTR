@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const LEFT_NAV = [
   { href: "/", label: "Dashboard" },
+  { href: "/ukoly", label: "Úkoly" },
   { href: "/kalendar", label: "Kalendář" },
   { href: "/projekty", label: "Projekty" },
   { href: "/finance", label: "Finance" },

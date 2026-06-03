@@ -285,6 +285,22 @@ export const projectMeta = pgTable("project_meta", {
     .$onUpdate(() => new Date()),
 });
 
+// task — jednoduché úkoly / TODO.
+export const task = pgTable("task", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  done: boolean("done").default(false).notNull(),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
 // expense — výdaje studia (hosting, domény, nástroje, subdodávky…).
 // recurring = měsíčně opakovaný náklad; jinak jednorázový.
 export const expense = pgTable("expense", {
@@ -413,6 +429,7 @@ export type NewActivity = typeof activity.$inferInsert;
 export type TelegramState = typeof telegramState.$inferSelect;
 export type ProjectMeta = typeof projectMeta.$inferSelect;
 export type Expense = typeof expense.$inferSelect;
+export type Task = typeof task.$inferSelect;
 export type CalendarEvent = typeof calendarEvent.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
 export type EventKind = (typeof eventKindEnum.enumValues)[number];

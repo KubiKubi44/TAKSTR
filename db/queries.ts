@@ -7,6 +7,7 @@ import {
   lead,
   outreach,
   projectMeta,
+  task,
   type LeadStatus,
 } from "./schema";
 
@@ -214,6 +215,13 @@ export async function getDueInvoices() {
       monthlyPrice: r.monthlyPrice,
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+// Úkoly: nehotové první, pak dle termínu (nulls last), pak nejnovější.
+export async function getTasks() {
+  return db.query.task.findMany({
+    orderBy: [asc(task.done), sql`${task.dueAt} asc nulls last`, desc(task.createdAt)],
+  });
 }
 
 // ── Finance ──────────────────────────────────────────────────
