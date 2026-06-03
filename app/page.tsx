@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import {
   getCampaignResponseRates,
   getDashboardMetrics,
+  getDueInvoices,
   getProjectRevenue,
   getUpcomingEvents,
   listLeads,
@@ -41,6 +42,7 @@ export default async function DashboardPage() {
   const leads = await listLeads();
   const campaignRates = await getCampaignResponseRates();
   const revenue = await getProjectRevenue();
+  const dueInvoices = await getDueInvoices();
   const upcoming = await getUpcomingEvents(6);
   const topLeads = leads.filter((l) => l.score !== null).slice(0, 8);
   const maxFunnel = Math.max(1, ...Object.values(m.statusCounts));
@@ -85,6 +87,29 @@ export default async function DashboardPage() {
         </Link>
       </Card>
 
+      {dueInvoices.length > 0 && (
+        <Card className="mt-6 gap-3 p-5">
+          <h2 className="font-heading text-sm font-semibold text-destructive">
+            K fakturaci ({dueInvoices.length})
+          </h2>
+          <ul className="divide-y divide-white/8">
+            {dueInvoices.map((d) => (
+              <li key={d.routeId} className="flex items-center gap-3 py-2 text-sm">
+                <span className="w-28 shrink-0 font-mono text-xs text-destructive">
+                  {new Date(d.date).toLocaleDateString("cs-CZ")}
+                </span>
+                <Link href={`/projekty/${d.routeId}`} className="flex-1 truncate hover:text-primary">
+                  {d.name}
+                </Link>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {d.monthlyPrice ? czk(d.monthlyPrice) : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       <Card className="mt-6 p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-heading text-sm font-semibold">Nadcházející</h2>
@@ -122,6 +147,14 @@ export default async function DashboardPage() {
                     className="shrink-0 truncate text-xs text-muted-foreground hover:text-primary"
                   >
                     {e.lead.businessName}
+                  </Link>
+                )}
+                {e.project && (
+                  <Link
+                    href={`/projekty/${e.project.vercelProjectId ?? e.project.id}`}
+                    className="shrink-0 truncate text-xs text-muted-foreground hover:text-primary"
+                  >
+                    {e.project.name ?? "projekt"}
                   </Link>
                 )}
               </li>

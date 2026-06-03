@@ -237,6 +237,9 @@ export const calendarEvent = pgTable("calendar_event", {
     .notNull()
     .references(() => appUser.id, { onDelete: "cascade" }),
   leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projectMeta.id, {
+    onDelete: "cascade",
+  }),
   kind: eventKindEnum("kind").notNull(),
   title: text("title").notNull(),
   startAt: timestamp("start_at", { withTimezone: true }).notNull(),
@@ -264,6 +267,7 @@ export const projectMeta = pgTable("project_meta", {
   url: text("url"), // web (hlavně u ručních projektů)
   buildPrice: integer("build_price"), // výrobní cena (Kč)
   monthlyPrice: integer("monthly_price"), // cena za měsíční správu (Kč)
+  nextInvoiceAt: timestamp("next_invoice_at", { withTimezone: true }), // datum příští faktury
   note: text("note"),
   // klient / kontakt
   clientName: text("client_name"),
@@ -326,6 +330,10 @@ export const calendarEventRelations = relations(calendarEvent, ({ one }) => ({
   lead: one(lead, {
     fields: [calendarEvent.leadId],
     references: [lead.id],
+  }),
+  project: one(projectMeta, {
+    fields: [calendarEvent.projectId],
+    references: [projectMeta.id],
   }),
   user: one(appUser, {
     fields: [calendarEvent.userId],

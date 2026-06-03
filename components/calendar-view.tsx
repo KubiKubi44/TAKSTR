@@ -41,6 +41,12 @@ export interface CalEvent {
   done: boolean;
   leadId: string | null;
   lead: { id: string; businessName: string } | null;
+  projectId: string | null;
+  project: { id: string; name: string | null; vercelProjectId: string | null } | null;
+}
+
+function projectRoute(p: { id: string; vercelProjectId: string | null }): string {
+  return `/projekty/${p.vercelProjectId ?? p.id}`;
 }
 
 const WEEKDAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
@@ -256,7 +262,9 @@ function EventChip({ e }: { e: CalEvent & { start: Date } }) {
       {fmtTime(e.start)} {e.title}
     </span>
   );
-  return e.leadId ? <Link href={`/leady/${e.leadId}`}>{content}</Link> : content;
+  if (e.leadId) return <Link href={`/leady/${e.leadId}`}>{content}</Link>;
+  if (e.project) return <Link href={projectRoute(e.project)}>{content}</Link>;
+  return content;
 }
 
 function ListSection({
@@ -309,7 +317,12 @@ function ListSection({
                     {e.lead.businessName}
                   </Link>
                 )}
-                {e.lead && (e.location || e.note) && " · "}
+                {e.project && (
+                  <Link href={projectRoute(e.project)} className="hover:text-primary">
+                    {e.project.name ?? "projekt"}
+                  </Link>
+                )}
+                {(e.lead || e.project) && (e.location || e.note) && " · "}
                 {e.location}
                 {e.location && e.note && " · "}
                 {e.note}

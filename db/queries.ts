@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   calendarEvent,
@@ -171,7 +171,10 @@ export type CampaignResponseRate = Awaited<
 // Všechny události kalendáře (s názvem leadu), řazené dle začátku.
 export async function listCalendarEvents() {
   return db.query.calendarEvent.findMany({
-    with: { lead: { columns: { id: true, businessName: true } } },
+    with: {
+      lead: { columns: { id: true, businessName: true } },
+      project: { columns: { id: true, name: true, vercelProjectId: true } },
+    },
     orderBy: [asc(calendarEvent.startAt)],
   });
 }
@@ -195,6 +198,23 @@ export async function getProjectMetaById(id: string) {
   return db.query.projectMeta.findFirst({ where: eq(projectMeta.id, id) });
 }
 
+// Projekty k fakturaci (datum příští faktury už nastalo).
+export async function getDueInvoices() {
+  const rows = await db.query.projectMeta.findMany({
+    where: and(isNotNull(projectMeta.nextInvoiceAt), eq(projectMeta.hidden, false)),
+  });
+  const now = Date.now();
+  return rows
+    .filter((r) => r.nextInvoiceAt && r.nextInvoiceAt.getTime() <= now)
+    .map((r) => ({
+      routeId: r.vercelProjectId ?? r.id,
+      name: r.name ?? "(bez názvu)",
+      date: r.nextInvoiceAt as Date,
+      monthlyPrice: r.monthlyPrice,
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
 // Opakovaný příjem ze správy (z aktivních = neskrytých projektů).
 export async function getProjectRevenue() {
   const rows = await db.query.projectMeta.findMany();
@@ -212,7 +232,10 @@ export async function getUpcomingEvents(limit = 5) {
       gte(calendarEvent.startAt, new Date()),
       eq(calendarEvent.done, false),
     ),
-    with: { lead: { columns: { id: true, businessName: true } } },
+    with: {
+      lead: { columns: { id: true, businessName: true } },
+      project: { columns: { id: true, name: true, vercelProjectId: true } },
+    },
     orderBy: [asc(calendarEvent.startAt)],
     limit,
   });

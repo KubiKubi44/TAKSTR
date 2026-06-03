@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BillingCard } from "@/components/billing-card";
 import { ClientForm } from "@/components/client-form";
 import { PageContainer } from "@/components/page-shell";
 import { ProjectCardActions } from "@/components/project-card-actions";
@@ -139,7 +140,14 @@ export default async function ProjectDetailPage({
           </div>
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
-          <PricesCard projectId={meta.id} meta={meta} />
+          <div className="space-y-6">
+            <PricesCard projectId={meta.id} meta={meta} />
+            <BillingCard
+              projectId={meta.id}
+              projectName={meta.name ?? ""}
+              nextInvoiceAt={meta.nextInvoiceAt ? meta.nextInvoiceAt.toISOString() : null}
+            />
+          </div>
           <ClientCard projectId={meta.id} showUrl meta={meta} />
         </div>
       </PageContainer>
@@ -203,7 +211,14 @@ export default async function ProjectDetailPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <PricesCard projectId={project.id} meta={meta} />
+        <div className="space-y-6">
+          <PricesCard projectId={project.id} meta={meta} />
+          <BillingCard
+            projectId={project.id}
+            projectName={displayName}
+            nextInvoiceAt={meta?.nextInvoiceAt ? meta.nextInvoiceAt.toISOString() : null}
+          />
+        </div>
 
         <div className="space-y-6">
           <ClientCard projectId={project.id} showUrl={false} meta={meta} />
