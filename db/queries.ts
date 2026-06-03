@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   calendarEvent,
@@ -217,10 +217,61 @@ export async function getDueInvoices() {
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-// Úkoly: nehotové první, pak dle termínu (nulls last), pak nejnovější.
+const taskLinks = {
+  lead: { columns: { id: true, businessName: true } },
+  project: { columns: { id: true, name: true, vercelProjectId: true } },
+} as const;
+
+// Úkoly i s vazbami (lead/projekt). Nehotové první, dle termínu, pak nejnovější.
 export async function getTasks() {
   return db.query.task.findMany({
+    with: taskLinks,
     orderBy: [asc(task.done), sql`${task.dueAt} asc nulls last`, desc(task.createdAt)],
+  });
+}
+
+export type TaskWithLinks = Awaited<ReturnType<typeof getTasks>>[number];
+
+// Úkoly rozdělené do skupin dle termínu + seřazené dle priority.
+export async function getTasksGrouped() {
+  const tasks = await getTasks();
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endToday = new Date(startToday);
+  endToday.setDate(endToday.getDate() + 1);
+  const endWeek = new Date(startToday);
+  endWeek.setDate(endWeek.getDate() + 7);
+
+  const w = (p: string) => (p === "high" ? 0 : p === "normal" ? 1 : 2);
+  const sortFn = (a: TaskWithLinks, b: TaskWithLinks) =>
+    w(a.priority) - w(b.priority) ||
+    (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity);
+
+  const overdue: TaskWithLinks[] = [];
+  const today: TaskWithLinks[] = [];
+  const week: TaskWithLinks[] = [];
+  const later: TaskWithLinks[] = [];
+  const none: TaskWithLinks[] = [];
+  for (const t of tasks.filter((t) => !t.done)) {
+    if (!t.dueAt) none.push(t);
+    else if (t.dueAt < startToday) overdue.push(t);
+    else if (t.dueAt < endToday) today.push(t);
+    else if (t.dueAt < endWeek) week.push(t);
+    else later.push(t);
+  }
+  [overdue, today, week, later, none].forEach((g) => g.sort(sortFn));
+  const done = tasks.filter((t) => t.done);
+  return { overdue, today, week, later, none, done };
+}
+
+// Nehotové úkoly s termínem do konce dneška (po termínu + dnes) — dashboard/digest.
+export async function getTodayTasks() {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return db.query.task.findMany({
+    where: and(eq(task.done, false), isNotNull(task.dueAt), lt(task.dueAt, end)),
+    with: taskLinks,
+    orderBy: [asc(task.dueAt)],
   });
 }
 

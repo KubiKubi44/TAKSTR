@@ -6,6 +6,7 @@ import { HealthBadge } from "@/components/health-badge";
 import { PageContainer } from "@/components/page-shell";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { ProjectMetaForm } from "@/components/project-meta-form";
+import { QuickAddTask } from "@/components/quick-add-task";
 import { RedeployButton } from "@/components/redeploy-button";
 import { Card } from "@/components/ui/card";
 import { getProjectMeta, getProjectMetaById } from "@/db/queries";
@@ -151,7 +152,13 @@ export default async function ProjectDetailPage({
               nextInvoiceAt={meta.nextInvoiceAt ? meta.nextInvoiceAt.toISOString() : null}
             />
           </div>
-          <ClientCard projectId={meta.id} showUrl meta={meta} />
+          <div className="space-y-6">
+            <ClientCard projectId={meta.id} showUrl meta={meta} />
+            <Card className="gap-3 p-5">
+              <h2 className="font-heading text-sm font-semibold">Rychlý úkol</h2>
+              <QuickAddTask projectId={meta.id} />
+            </Card>
+          </div>
         </div>
       </PageContainer>
     );
@@ -227,6 +234,12 @@ export default async function ProjectDetailPage({
 
         <div className="space-y-6">
           <ClientCard projectId={project.id} showUrl={false} meta={meta} />
+          {meta?.id && (
+            <Card className="gap-3 p-5">
+              <h2 className="font-heading text-sm font-semibold">Rychlý úkol</h2>
+              <QuickAddTask projectId={meta.id} />
+            </Card>
+          )}
           <Card className="gap-2 p-5">
             <h2 className="mb-2 font-heading text-sm font-semibold">Vercel</h2>
             <dl className="space-y-1 text-sm">

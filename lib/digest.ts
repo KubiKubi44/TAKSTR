@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, lt } from "drizzle-orm";
 import { db } from "@/db/client";
 import { calendarEvent, lead } from "@/db/schema";
-import { getDueInvoices } from "@/db/queries";
+import { getDueInvoices, getTodayTasks } from "@/db/queries";
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -18,7 +18,7 @@ export async function composeDigest(): Promise<string> {
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
 
-  const [due, todayEvents, drafts] = await Promise.all([
+  const [due, todayEvents, drafts, tasks] = await Promise.all([
     getDueInvoices(),
     db.query.calendarEvent.findMany({
       where: and(gte(calendarEvent.startAt, start), lt(calendarEvent.startAt, end)),
@@ -32,6 +32,7 @@ export async function composeDigest(): Promise<string> {
       where: eq(lead.status, "drafted"),
       columns: { businessName: true },
     }),
+    getTodayTasks(),
   ]);
 
   const lines: string[] = [`<b>📋 Denní souhrn</b>`];
@@ -56,7 +57,16 @@ export async function composeDigest(): Promise<string> {
   if (drafts.length === 0) lines.push("• nic");
   else for (const l of drafts.slice(0, 10)) lines.push(`• ${esc(l.businessName)}`);
 
-  if (due.length === 0 && todayEvents.length === 0 && drafts.length === 0) {
+  lines.push("", `<b>✅ Úkoly dnes / po termínu (${tasks.length})</b>`);
+  if (tasks.length === 0) lines.push("• nic");
+  else for (const t of tasks.slice(0, 10)) lines.push(`• ${esc(t.title)}`);
+
+  if (
+    due.length === 0 &&
+    todayEvents.length === 0 &&
+    drafts.length === 0 &&
+    tasks.length === 0
+  ) {
     return "<b>📋 Denní souhrn</b>\n\nDnes nic naléhavého. ☕";
   }
 

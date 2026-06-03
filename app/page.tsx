@@ -8,12 +8,14 @@ import {
   getDashboardMetrics,
   getDueInvoices,
   getProjectRevenue,
+  getTodayTasks,
   getUpcomingEvents,
   listLeads,
 } from "@/db/queries";
 
 const czk = (n: number) => `${n.toLocaleString("cs-CZ")} Kč`;
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
+import { PRIORITY_DOT } from "@/lib/taskMeta";
 
 function Metric({
   label,
@@ -43,6 +45,7 @@ export default async function DashboardPage() {
   const campaignRates = await getCampaignResponseRates();
   const revenue = await getProjectRevenue();
   const dueInvoices = await getDueInvoices();
+  const todayTasks = await getTodayTasks();
   const upcoming = await getUpcomingEvents(6);
   const topLeads = leads.filter((l) => l.score !== null).slice(0, 8);
   const maxFunnel = Math.max(1, ...Object.values(m.statusCounts));
@@ -104,6 +107,40 @@ export default async function DashboardPage() {
                 <span className="font-mono text-xs tabular-nums text-muted-foreground">
                   {d.monthlyPrice ? czk(d.monthlyPrice) : ""}
                 </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {todayTasks.length > 0 && (
+        <Card className="mt-6 gap-3 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-sm font-semibold">
+              Úkoly — dnes &amp; po termínu ({todayTasks.length})
+            </h2>
+            <Link href="/ukoly" className="font-mono text-xs text-muted-foreground hover:text-primary">
+              Úkoly →
+            </Link>
+          </div>
+          <ul className="divide-y divide-white/8">
+            {todayTasks.map((t) => (
+              <li key={t.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className={`size-2 shrink-0 rounded-full ${PRIORITY_DOT[t.priority]}`} />
+                <span className="flex-1 truncate">{t.title}</span>
+                {t.project && (
+                  <Link
+                    href={`/projekty/${t.project.vercelProjectId ?? t.project.id}`}
+                    className="shrink-0 truncate text-xs text-muted-foreground hover:text-primary"
+                  >
+                    {t.project.name}
+                  </Link>
+                )}
+                {t.dueAt && (
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    {new Date(t.dueAt).toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric" })}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

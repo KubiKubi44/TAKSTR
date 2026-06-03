@@ -72,6 +72,8 @@ export const campaignStatusEnum = pgEnum("campaign_status", [
 
 export const eventKindEnum = pgEnum("event_kind", ["meeting", "followup"]);
 
+export const taskPriorityEnum = pgEnum("task_priority", ["low", "normal", "high"]);
+
 // ─────────────────────────────────────────────────────────────
 // Tabulky
 // ─────────────────────────────────────────────────────────────
@@ -285,13 +287,18 @@ export const projectMeta = pgTable("project_meta", {
     .$onUpdate(() => new Date()),
 });
 
-// task — jednoduché úkoly / TODO.
+// task — úkoly / TODO (priorita, termín, volitelně navázané na projekt/lead).
 export const task = pgTable("task", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   done: boolean("done").default(false).notNull(),
+  priority: taskPriorityEnum("priority").default("normal").notNull(),
   dueAt: timestamp("due_at", { withTimezone: true }),
   note: text("note"),
+  leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projectMeta.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -300,6 +307,14 @@ export const task = pgTable("task", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+export const taskRelations = relations(task, ({ one }) => ({
+  lead: one(lead, { fields: [task.leadId], references: [lead.id] }),
+  project: one(projectMeta, {
+    fields: [task.projectId],
+    references: [projectMeta.id],
+  }),
+}));
 
 // expense — výdaje studia (hosting, domény, nástroje, subdodávky…).
 // recurring = měsíčně opakovaný náklad; jinak jednorázový.
@@ -430,6 +445,7 @@ export type TelegramState = typeof telegramState.$inferSelect;
 export type ProjectMeta = typeof projectMeta.$inferSelect;
 export type Expense = typeof expense.$inferSelect;
 export type Task = typeof task.$inferSelect;
+export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 export type CalendarEvent = typeof calendarEvent.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
 export type EventKind = (typeof eventKindEnum.enumValues)[number];

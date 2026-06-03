@@ -6,6 +6,7 @@ import { DraftGenerate } from "@/components/draft-generate";
 import { LeadFlags } from "@/components/lead-flags";
 import { NewEventDialog } from "@/components/new-event-dialog";
 import { NoteForm } from "@/components/note-form";
+import { QuickAddTask } from "@/components/quick-add-task";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-shell";
 import { ScoreBadge } from "@/components/score-badge";
@@ -288,6 +289,11 @@ export default async function LeadDetailPage({
                 ))}
               </ul>
             )}
+          </Card>
+
+          <Card className="gap-3 p-5">
+            <h2 className="font-heading text-sm font-semibold">Rychlý úkol</h2>
+            <QuickAddTask leadId={lead.id} />
           </Card>
 
           <Card className="gap-3 p-5">
