@@ -16,7 +16,7 @@ export default async function CalendarPage() {
         title="Kalendář"
         actions={<NewEventDialog leads={leadOptions} />}
       />
-      <CalendarView events={events} />
+      <CalendarView events={events} leads={leadOptions} />
     </PageContainer>
   );
 }
