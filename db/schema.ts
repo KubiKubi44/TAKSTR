@@ -134,6 +134,12 @@ export const lead = pgTable(
     // interní příznaky z triáže bez změny schématu:
     // websiteUnreachable (web nejede), socialOnly/noRealWebsite (jen FB/IG) atd.
     flags: jsonb("flags").$type<Record<string, unknown>>().default({}).notNull(),
+    // obohacení leadu z externích rejstříků (ARES) a hodnocení (Google):
+    // { ico, legalForm, foundedAt, address, nace, rating, reviews, placeId, enrichedAt }
+    enrichment: jsonb("enrichment")
+      .$type<Record<string, unknown>>()
+      .default({})
+      .notNull(),
     status: leadStatusEnum("status").default("discovered").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -206,8 +212,15 @@ export const outreach = pgTable("outreach", {
   toAddr: text("to_addr").notNull(),
   // id z Resendu (outbound); inbound nemá
   providerId: text("provider_id"),
+  // sent → delivered → opened → clicked, nebo bounced/complained (z Resend webhooku)
   status: text("status"),
   sentAt: timestamp("sent_at", { withTimezone: true }),
+  // doručitelnostní události z Resend webhooku
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  openedAt: timestamp("opened_at", { withTimezone: true }),
+  clickedAt: timestamp("clicked_at", { withTimezone: true }),
+  bouncedAt: timestamp("bounced_at", { withTimezone: true }),
+  complainedAt: timestamp("complained_at", { withTimezone: true }),
   repliedAt: timestamp("replied_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
@@ -216,6 +229,22 @@ export const outreach = pgTable("outreach", {
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
+});
+
+// suppression — „nikdy neoslovovat" seznam. Na koho jednou padne (ruční opt-out,
+// klik na odhlášení, hard bounce, spam complaint), tomu se už nikdy neodešle.
+// Klíčem je e-mail (lowercase). Chrání doručitelnost i právní compliance.
+export const suppression = pgTable("suppression", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  // 'manual' | 'unsubscribe' | 'bounce' | 'complaint'
+  reason: text("reason").notNull(),
+  // volitelně lead, kvůli kterému vznikl (audit)
+  leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // activity — časová osa leadu (audit). Append-only.
@@ -439,6 +468,8 @@ export type EmailDraft = typeof emailDraft.$inferSelect;
 export type NewEmailDraft = typeof emailDraft.$inferInsert;
 export type Outreach = typeof outreach.$inferSelect;
 export type NewOutreach = typeof outreach.$inferInsert;
+export type Suppression = typeof suppression.$inferSelect;
+export type NewSuppression = typeof suppression.$inferInsert;
 export type Activity = typeof activity.$inferSelect;
 export type NewActivity = typeof activity.$inferInsert;
 export type TelegramState = typeof telegramState.$inferSelect;

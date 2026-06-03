@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 import { parseSender } from "./claude";
+import { isSuppressed } from "./suppression";
+import { unsubscribeUrl } from "./unsubscribe";
 
 // Odesílání e-mailů přes Resend z ověřené domény.
 // Ke každému mailu se VŽDY připojí opt-out patička — identifikace odesílatele
@@ -15,13 +17,23 @@ export interface SendEmailResult {
   providerId: string;
 }
 
+// Vyhozeno, když je příjemce na suppression listu — odeslání se NESMÍ provést.
+export class SuppressedRecipientError extends Error {
+  constructor(public email: string) {
+    super(`Příjemce ${email} je na seznamu odhlášených — neodesílám.`);
+    this.name = "SuppressedRecipientError";
+  }
+}
+
 // Patička: kdo píše + jak odmítnout. Nikdy negenerovat mail bez ní.
-function optOutFooter(): string {
+// Obsahuje klikací odhlašovací odkaz (jednoklik), ne jen „odpověz NE".
+function optOutFooter(to: string): string {
   const sender = parseSender(process.env.MAIL_FROM);
   return [
     "—",
     `Tento e-mail vám poslal ${sender.name} (${sender.email}).`,
-    'Pokud si nepřejete další oslovení, stačí odpovědět „NE" a víc se neozveme.',
+    `Pokud si nepřejete další oslovení, odhlaste se zde: ${unsubscribeUrl(to)}`,
+    'Nebo stačí odpovědět „NE" a víc se neozveme.',
   ].join("\n");
 }
 
@@ -39,8 +51,14 @@ export async function sendEmail({
     throw new Error("MAIL_FROM není nastavený v .env.");
   }
 
+  // tvrdá pojistka: na odhlášené nikdy neposíláme (i kdyby to volající opomněl)
+  if (await isSuppressed(to)) {
+    throw new SuppressedRecipientError(to);
+  }
+
   const sender = parseSender(from);
-  const text = `${body.trim()}\n\n${optOutFooter()}`;
+  const text = `${body.trim()}\n\n${optOutFooter(to)}`;
+  const unsubUrl = unsubscribeUrl(to);
 
   const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
@@ -50,8 +68,9 @@ export async function sendEmail({
     text,
     replyTo: sender.email,
     headers: {
-      // strojově čitelný opt-out (RFC 8058 / 2369)
-      "List-Unsubscribe": `<mailto:${sender.email}?subject=unsubscribe>`,
+      // strojově čitelný opt-out (RFC 8058 / 2369) — jednoklik přes HTTPS i mailto
+      "List-Unsubscribe": `<${unsubUrl}>, <mailto:${sender.email}?subject=unsubscribe>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },
   });
 

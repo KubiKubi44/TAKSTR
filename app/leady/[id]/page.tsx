@@ -23,6 +23,36 @@ const DRAFT_STATUS_LABEL: Record<string, string> = {
   discarded: "Zahozeno",
 };
 
+const DELIVERY_LABEL: Record<string, string> = {
+  sent: "Odesláno",
+  delayed: "Zdrženo",
+  delivered: "Doručeno",
+  opened: "Otevřeno",
+  clicked: "Prokliknuto",
+  bounced: "Nedoručeno",
+  complained: "Spam",
+  replied: "Odpovězeno",
+};
+
+function deliveryTone(status: string | null): string {
+  if (status === "bounced" || status === "complained") return "text-destructive";
+  if (status === "opened" || status === "clicked" || status === "replied") return "text-primary";
+  if (status === "delivered") return "text-foreground";
+  return "text-muted-foreground";
+}
+
+function fmtDate(v: unknown): string {
+  if (typeof v !== "string") return "—";
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString("cs-CZ");
+}
+
+function stars(rating: unknown): string {
+  if (typeof rating !== "number") return "—";
+  const full = Math.round(rating);
+  return `${"★".repeat(full)}${"☆".repeat(Math.max(0, 5 - full))} ${rating.toFixed(1)}`;
+}
+
 function fmt(d: Date | string): string {
   return new Date(d).toLocaleString("cs-CZ", {
     day: "2-digit",
@@ -132,6 +162,12 @@ export default async function LeadDetailPage({
         >
           Označit odpovězeno
         </ActionButton>
+        <ActionButton
+          endpoint={`/api/leads/${lead.id}/enrich`}
+          successMessage="Obohaceno z ARES / hodnocení"
+        >
+          Obohatit
+        </ActionButton>
         <div className="mx-1 h-5 w-px self-center bg-border" />
         <CreateProjectButton leadId={lead.id} />
       </Card>
@@ -224,6 +260,42 @@ export default async function LeadDetailPage({
             </dl>
           </Card>
 
+          {(() => {
+            const e = lead.enrichment as Record<string, unknown>;
+            const has = e && (e.ico || typeof e.rating === "number");
+            if (!has) return null;
+            const nace = Array.isArray(e.nace) ? (e.nace as string[]) : [];
+            return (
+              <Card className="gap-2 p-5">
+                <h2 className="font-heading text-sm font-semibold">Firma &amp; hodnocení</h2>
+                <dl className="space-y-1 text-sm">
+                  {typeof e.rating === "number" && (
+                    <Row
+                      k="Hodnocení"
+                      v={`${stars(e.rating)}${typeof e.reviews === "number" ? ` (${e.reviews})` : ""}`}
+                    />
+                  )}
+                  {e.ico ? <Row k="IČO" v={String(e.ico)} /> : null}
+                  {e.legalForm ? <Row k="Forma" v={String(e.legalForm)} /> : null}
+                  {e.foundedAt ? <Row k="Vznik" v={fmtDate(e.foundedAt)} /> : null}
+                  {e.address ? <Row k="Sídlo" v={String(e.address)} /> : null}
+                  {nace.length > 0 ? <Row k="NACE" v={nace.slice(0, 4).join(", ")} /> : null}
+                  {e.aresName ? <Row k="Rejstřík" v={String(e.aresName)} /> : null}
+                </dl>
+                {e.ico ? (
+                  <a
+                    href={`https://ares.gov.cz/ekonomicke-subjekty?ico=${e.ico}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block font-mono text-xs text-primary hover:underline"
+                  >
+                    Otevřít v ARES ↗
+                  </a>
+                ) : null}
+              </Card>
+            );
+          })()}
+
           <Card className="gap-2 p-5">
             <h2 className="font-heading text-sm font-semibold">
               Signály {lead.analyses.length > 1 && `(${lead.analyses.length} analýz)`}
@@ -246,6 +318,36 @@ export default async function LeadDetailPage({
               </dl>
             )}
           </Card>
+
+          {(() => {
+            const sends = lead.outreach.filter((o) => o.direction === "outbound");
+            if (sends.length === 0) return null;
+            return (
+              <Card className="gap-2 p-5">
+                <h2 className="font-heading text-sm font-semibold">Doručení</h2>
+                <ul className="space-y-2 text-sm">
+                  {sends.map((o) => (
+                    <li key={o.id} className="flex items-center justify-between gap-2">
+                      <span className="w-20 shrink-0 font-mono text-xs text-muted-foreground">
+                        {o.sentAt ? fmt(o.sentAt) : "—"}
+                      </span>
+                      <span
+                        className={`font-mono text-[10px] uppercase tracking-wider ${deliveryTone(o.status)}`}
+                      >
+                        {DELIVERY_LABEL[o.status ?? ""] ?? o.status ?? "—"}
+                      </span>
+                      <span className="flex-1 truncate text-right font-mono text-xs text-muted-foreground">
+                        {o.openedAt ? "👁 otevřel" : o.deliveredAt ? "doručeno" : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-[11px] text-muted-foreground/70">
+                  Stavy se aktualizují přes Resend webhook (doručeno / otevřeno / odmítnuto).
+                </p>
+              </Card>
+            );
+          })()}
 
           <Card className="gap-3 p-5">
             <div className="flex items-center justify-between gap-2">

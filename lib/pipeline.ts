@@ -12,9 +12,11 @@ import {
 } from "@/db/schema";
 import { getLeadWithRelations } from "@/db/queries";
 import { analyzeWebsite } from "@/lib/analyzer";
+import { lookupAres } from "@/lib/ares";
+import { lookupRating, placesEnabled } from "@/lib/places";
 import { CLAUDE_MODEL, generateDraft, parseSender } from "@/lib/claude";
 import { logActivity, updateLeadStatus } from "@/lib/leads";
-import { sendEmail } from "@/lib/resend";
+import { sendEmail, SuppressedRecipientError } from "@/lib/resend";
 import { sendDraftMessage } from "@/lib/telegram";
 import { hostnameOf, normalizeWebsiteUrl } from "@/lib/url";
 
@@ -96,6 +98,74 @@ export async function analyzeLead(leadId: string, actor: ActivityActor) {
     contactEmail: result.contactEmail,
     contactEmailSavedToLead: contactEmailSet,
     textExcerptLength: result.textExcerpt.length,
+  };
+}
+
+// ── Obohacení leadu (ARES + Google hodnocení) ────────────────
+export async function enrichLead(leadId: string, actor: ActivityActor) {
+  const row = await db.query.lead.findFirst({
+    where: eq(lead.id, leadId),
+    with: { campaign: true },
+  });
+  if (!row) throw new PipelineError("Lead nenalezen", 404);
+
+  // ARES a Google běží paralelně; chyba jednoho nesmí shodit druhé
+  const region = row.campaign?.region ?? null;
+  const [aresRes, ratingRes] = await Promise.allSettled([
+    lookupAres(row.businessName),
+    lookupRating(row.businessName, region),
+  ]);
+
+  const ares = aresRes.status === "fulfilled" ? aresRes.value : null;
+  const rating = ratingRes.status === "fulfilled" ? ratingRes.value : null;
+
+  if (!ares && !rating) {
+    const errs = [
+      aresRes.status === "rejected" ? `ARES: ${aresRes.reason}` : null,
+      ratingRes.status === "rejected" ? `Google: ${ratingRes.reason}` : null,
+    ].filter(Boolean);
+    throw new PipelineError(
+      errs.length ? errs.join(" · ") : "Nic se nenašlo (ARES ani hodnocení).",
+      502,
+    );
+  }
+
+  const enrichment: Record<string, unknown> = {
+    ...row.enrichment,
+    ...(ares
+      ? {
+          ico: ares.ico,
+          aresName: ares.name,
+          legalForm: ares.legalForm,
+          foundedAt: ares.foundedAt,
+          address: ares.address,
+          nace: ares.nace,
+        }
+      : {}),
+    ...(rating
+      ? { rating: rating.rating, reviews: rating.reviews, placeId: rating.placeId }
+      : {}),
+    enrichedAt: new Date().toISOString(),
+    placesChecked: placesEnabled(),
+  };
+
+  await db.update(lead).set({ enrichment }).where(eq(lead.id, row.id));
+  await logActivity({
+    leadId: row.id,
+    type: "note",
+    actor,
+    payload: {
+      event: "enriched",
+      ico: ares?.ico ?? null,
+      rating: rating?.rating ?? null,
+      reviews: rating?.reviews ?? null,
+    },
+  });
+
+  return {
+    ares,
+    rating,
+    placesEnabled: placesEnabled(),
   };
 }
 
@@ -202,6 +272,9 @@ export async function sendLeadDraft(leadId: string, actor: ActivityActor) {
       await sendEmail({ to: recipient, subject: draft.subject, body: draft.body })
     ).providerId;
   } catch (err) {
+    if (err instanceof SuppressedRecipientError) {
+      throw new PipelineError(err.message, 409);
+    }
     const message = (err as Error).message;
     const status = message.includes("RESEND_API_KEY") || message.includes("MAIL_FROM") ? 503 : 502;
     throw new PipelineError(`Odeslání selhalo: ${message}`, status);

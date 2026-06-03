@@ -85,6 +85,13 @@
       "when": 1780520416836,
       "tag": "0011_wet_thunderbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780523346571,
+      "tag": "0012_strong_hydra",
+      "breakpoints": true
     }
   ]
 }
