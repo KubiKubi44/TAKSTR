@@ -27,11 +27,9 @@ const czk = (n: number | null | undefined) =>
 
 function PricesCard({
   projectId,
-  projectName,
   meta,
 }: {
   projectId: string;
-  projectName: string;
   meta: { buildPrice: number | null; monthlyPrice: number | null; note: string | null } | null | undefined;
 }) {
   return (
@@ -49,7 +47,6 @@ function PricesCard({
       </div>
       <ProjectMetaForm
         projectId={projectId}
-        projectName={projectName}
         initial={{
           buildPrice: meta?.buildPrice ?? null,
           monthlyPrice: meta?.monthlyPrice ?? null,
@@ -92,11 +89,17 @@ export default async function ProjectDetailPage({
                 Otevřít web ↗
               </a>
             )}
-            <ProjectCardActions id={meta.id} isVercel={false} hidden={meta.hidden} redirect="/projekty" />
+            <ProjectCardActions
+              id={meta.id}
+              isVercel={false}
+              hidden={meta.hidden}
+              redirect="/projekty"
+              currentName={meta.name ?? ""}
+            />
           </div>
         </div>
         <div className="max-w-xl">
-          <PricesCard projectId={meta.id} projectName={meta.name ?? ""} meta={meta} />
+          <PricesCard projectId={meta.id} meta={meta} />
         </div>
       </PageContainer>
     );
@@ -117,6 +120,7 @@ export default async function ProjectDetailPage({
   }
   if (!project) notFound();
   const meta = await getProjectMeta(id);
+  const displayName = meta?.name ?? project.name;
 
   return (
     <PageContainer wide>
@@ -128,7 +132,7 @@ export default async function ProjectDetailPage({
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">{project.name}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">{displayName}</h1>
           {project.state && (
             <span className={`border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateBadge(project.state)}`}>
               {project.state.toLowerCase()}
@@ -147,12 +151,18 @@ export default async function ProjectDetailPage({
           <a href={project.dashboardUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary">
             Vercel ↗
           </a>
-          <ProjectCardActions id={project.id} isVercel hidden={meta?.hidden ?? false} redirect="/projekty" />
+          <ProjectCardActions
+            id={project.id}
+            isVercel
+            hidden={meta?.hidden ?? false}
+            redirect="/projekty"
+            currentName={displayName}
+          />
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <PricesCard projectId={project.id} projectName={project.name} meta={meta} />
+        <PricesCard projectId={project.id} meta={meta} />
 
         <div className="space-y-6">
           <Card className="gap-2 p-5">

@@ -65,7 +65,7 @@ export default async function ProjectsPage({
       const m = metaByVercelId.get(p.id);
       return {
         key: p.id,
-        name: p.name,
+        name: m?.name ?? p.name,
         framework: p.framework,
         state: p.state,
         repo: p.repo,
@@ -158,7 +158,7 @@ export default async function ProjectsPage({
                   <span className={`shrink-0 border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${stateClass(p.state)}`}>
                     {stateLabel(p.state)}
                   </span>
-                  <ProjectCardActions id={p.key} isVercel={p.isVercel} hidden={p.hidden} />
+                  <ProjectCardActions id={p.key} isVercel={p.isVercel} hidden={p.hidden} currentName={p.name} />
                 </div>
               </div>
               <p className="font-mono text-xs text-muted-foreground">

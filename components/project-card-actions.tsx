@@ -15,17 +15,41 @@ export function ProjectCardActions({
   isVercel,
   hidden,
   redirect,
+  currentName,
 }: {
   id: string;
   isVercel: boolean;
   hidden: boolean;
   redirect?: string;
+  currentName?: string;
 }) {
   const router = useRouter();
 
   function done() {
     if (redirect) router.push(redirect);
     router.refresh();
+  }
+
+  async function rename() {
+    const next = window.prompt(
+      isVercel
+        ? "Vlastní název projektu (prázdné = původní z Vercelu):"
+        : "Název projektu:",
+      currentName ?? "",
+    );
+    if (next === null) return;
+    const res = await fetch(`/api/projects/${id}/rename`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: next }),
+    });
+    if (res.ok) {
+      toast.success("Přejmenováno");
+      router.refresh();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      toast.error(d.error ?? "Nepovedlo se");
+    }
   }
 
   async function setHidden(h: boolean) {
@@ -62,6 +86,7 @@ export function ProjectCardActions({
         ⋯
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={rename}>Přejmenovat</DropdownMenuItem>
         {hidden ? (
           <DropdownMenuItem onClick={() => setHidden(false)}>
             Zobrazit

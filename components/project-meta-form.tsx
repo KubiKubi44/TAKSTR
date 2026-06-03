@@ -10,11 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function ProjectMetaForm({
   projectId,
-  projectName,
   initial,
 }: {
   projectId: string;
-  projectName: string;
   initial: { buildPrice: number | null; monthlyPrice: number | null; note: string | null };
 }) {
   const router = useRouter();
@@ -30,7 +28,6 @@ export function ProjectMetaForm({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          name: projectName,
           buildPrice: buildPrice.trim() === "" ? null : buildPrice,
           monthlyPrice: monthlyPrice.trim() === "" ? null : monthlyPrice,
           note,

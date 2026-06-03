@@ -23,8 +23,9 @@ export async function POST(
     return Number.isFinite(n) ? Math.round(n) : null;
   };
 
+  // jméno (override) měníme jen když přijde — ať uložení cen nepřepíše přezdívku
+  const nameSet = typeof body?.name === "string" ? { name: body.name } : {};
   const fields = {
-    name: typeof body?.name === "string" ? body.name : null,
     buildPrice: toInt(body?.buildPrice),
     monthlyPrice: toInt(body?.monthlyPrice),
     note: typeof body?.note === "string" ? body.note : null,
@@ -34,10 +35,10 @@ export async function POST(
     // Vercel projekt → upsert podle vercel_project_id
     await db
       .insert(projectMeta)
-      .values({ vercelProjectId: id, ...fields })
+      .values({ vercelProjectId: id, ...fields, ...nameSet })
       .onConflictDoUpdate({
         target: projectMeta.vercelProjectId,
-        set: { ...fields, updatedAt: new Date() },
+        set: { ...fields, ...nameSet, updatedAt: new Date() },
       });
   } else {
     // ruční projekt → update podle uuid (případně i url)
@@ -45,6 +46,7 @@ export async function POST(
       .update(projectMeta)
       .set({
         ...fields,
+        ...nameSet,
         url: typeof body?.url === "string" ? body.url.trim() || null : undefined,
         updatedAt: new Date(),
       })
