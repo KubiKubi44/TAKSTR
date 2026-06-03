@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 
-// Inter = běžný text, Space Grotesk = nadpisy, Geist Mono = čísla / stavy / ID.
-const inter = Inter({
+// Apple-style: jeden čistý sans (Geist ~ San Francisco) na text i nadpisy,
+// Geist Mono na čísla / stavy / ID.
+const geistSans = Geist({
   variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-heading",
   subsets: ["latin"],
 });
 
@@ -34,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="cs"
-      className={`dark ${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
