@@ -28,7 +28,7 @@ export default function RootLayout({
       className={`dark ${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SiteHeader />
+        <SiteHeader authEnabled={!!process.env.APP_PASSWORD} />
         <div className="flex flex-1 flex-col">{children}</div>
         <Toaster position="bottom-right" />
       </body>

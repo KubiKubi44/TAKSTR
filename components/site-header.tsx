@@ -15,10 +15,17 @@ const RIGHT_NAV = [
   { href: "/leady", label: "Leady" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  if (pathname === "/login") return null;
 
   const renderLink = (item: { href: string; label: string }) => (
     <Link
@@ -43,6 +50,15 @@ export function SiteHeader() {
         </nav>
         <nav className="flex items-stretch gap-6 text-sm">
           {RIGHT_NAV.map(renderLink)}
+          {authEnabled && (
+            <button
+              type="button"
+              onClick={logout}
+              className="flex items-center text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Odhlásit
+            </button>
+          )}
         </nav>
       </div>
     </header>
