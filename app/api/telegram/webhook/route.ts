@@ -16,6 +16,7 @@ import {
   sendMessage,
   singleButton,
 } from "@/lib/telegram";
+import { composeDigest } from "@/lib/digest";
 
 // Minimal tvary Telegram update, co používáme.
 interface TgChat { id: number }
@@ -96,6 +97,12 @@ async function handleMessage(msg: TgMessage) {
   if (!text) return;
 
   if (!(await findUserByChatId(chatId))) return; // whitelist
+
+  // /digest → pošle denní souhrn na vyžádání
+  if (text === "/digest" || text === "/souhrn") {
+    await sendMessage(chatId, await composeDigest());
+    return;
+  }
 
   // čekáme na instrukci k úpravě?
   const state = await db.query.telegramState.findFirst({
