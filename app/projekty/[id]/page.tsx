@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BillingCard } from "@/components/billing-card";
 import { ClientForm } from "@/components/client-form";
+import { HealthBadge } from "@/components/health-badge";
 import { PageContainer } from "@/components/page-shell";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { ProjectMetaForm } from "@/components/project-meta-form";
@@ -123,6 +124,7 @@ export default async function ProjectDetailPage({
             <span className="border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               ruční
             </span>
+            {meta.url && <HealthBadge url={meta.url} />}
           </div>
           <div className="flex items-center gap-3 font-mono text-xs">
             {meta.url && (
@@ -187,6 +189,7 @@ export default async function ProjectDetailPage({
               {project.state.toLowerCase()}
             </span>
           )}
+          {project.url && <HealthBadge url={project.url} />}
         </div>
         <div className="flex items-center gap-3 font-mono text-xs">
           {project.url && (
