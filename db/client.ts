@@ -23,8 +23,12 @@ const client =
   globalForDb.__pgClient ??
   postgres(connectionString, {
     prepare: false,
-    // Pooler má vlastní limity; držíme malý pool na straně aplikace.
-    max: 10,
+    // Pooler má vlastní limity; držíme malý pool a zavíráme nečinná spojení,
+    // ať se přes dlouhý dev běh (hot-reloady) nehromadí a nevyčerpá se pooler.
+    max: 5,
+    idle_timeout: 20, // s — zavři nečinné spojení
+    max_lifetime: 60 * 30, // s — recykluj spojení po 30 min
+    connect_timeout: 15, // s
   });
 
 if (process.env.NODE_ENV !== "production") {
