@@ -12,6 +12,7 @@ const RIGHT_NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/kalendar", label: "Kalendář" },
   { href: "/projekty", label: "Projekty" },
+  { href: "/finance", label: "Finance" },
 ];
 
 export function SiteHeader() {

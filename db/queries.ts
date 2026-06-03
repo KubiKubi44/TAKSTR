@@ -3,6 +3,7 @@ import { db } from "./client";
 import {
   calendarEvent,
   campaign,
+  expense,
   lead,
   outreach,
   projectMeta,
@@ -213,6 +214,76 @@ export async function getDueInvoices() {
       monthlyPrice: r.monthlyPrice,
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+// ── Finance ──────────────────────────────────────────────────
+export async function getExpenses() {
+  return db.query.expense.findMany({
+    orderBy: [desc(expense.recurring), desc(expense.amount)],
+  });
+}
+
+export async function getFinanceSummary() {
+  const rev = await getProjectRevenue();
+  const exp = await db.query.expense.findMany();
+  const recurringCost = exp
+    .filter((e) => e.recurring)
+    .reduce((s, e) => s + e.amount, 0);
+  const oneTimeCost = exp
+    .filter((e) => !e.recurring)
+    .reduce((s, e) => s + e.amount, 0);
+  const monthlyProfit = rev.monthly - recurringCost;
+  return {
+    mrr: rev.monthly,
+    arr: rev.annual,
+    buildTotal: rev.buildTotal,
+    recurringCost,
+    oneTimeCost,
+    monthlyProfit,
+    annualProfit: monthlyProfit * 12,
+  };
+}
+
+export async function getProjectIncomeRows() {
+  const rows = await db.query.projectMeta.findMany({
+    where: eq(projectMeta.hidden, false),
+  });
+  const totalMonthly = rows.reduce((s, r) => s + (r.monthlyPrice ?? 0), 0);
+  return rows
+    .filter((r) => (r.monthlyPrice ?? 0) > 0 || (r.buildPrice ?? 0) > 0)
+    .map((r) => ({
+      routeId: r.vercelProjectId ?? r.id,
+      name: r.name ?? "(bez názvu)",
+      build: r.buildPrice ?? 0,
+      monthly: r.monthlyPrice ?? 0,
+      annual: (r.monthlyPrice ?? 0) * 12,
+      share: totalMonthly > 0 ? (r.monthlyPrice ?? 0) / totalMonthly : 0,
+    }))
+    .sort((a, b) => b.monthly - a.monthly);
+}
+
+export async function getInvoiceSchedule() {
+  const rows = await db.query.projectMeta.findMany({
+    where: and(isNotNull(projectMeta.nextInvoiceAt), eq(projectMeta.hidden, false)),
+  });
+  const now = new Date();
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const upcoming = rows
+    .filter((r) => r.nextInvoiceAt && r.nextInvoiceAt.getTime() > now.getTime())
+    .map((r) => ({
+      routeId: r.vercelProjectId ?? r.id,
+      name: r.name ?? "(bez názvu)",
+      date: r.nextInvoiceAt as Date,
+      amount: r.monthlyPrice ?? 0,
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  const thisMonthSum = rows
+    .filter(
+      (r) => r.nextInvoiceAt && r.nextInvoiceAt >= startMonth && r.nextInvoiceAt < endMonth,
+    )
+    .reduce((s, r) => s + (r.monthlyPrice ?? 0), 0);
+  return { upcoming, thisMonthSum };
 }
 
 // Opakovaný příjem ze správy (z aktivních = neskrytých projektů).

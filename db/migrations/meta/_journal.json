@@ -64,6 +64,13 @@
       "when": 1780514550243,
       "tag": "0008_silly_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780516322666,
+      "tag": "0009_clumsy_omega_red",
+      "breakpoints": true
     }
   ]
 }
