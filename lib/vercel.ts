@@ -17,6 +17,8 @@ export interface VercelProject {
 }
 
 interface RawDeployment {
+  uid?: string;
+  id?: string;
   readyState?: string;
   state?: string;
   url?: string;
@@ -41,6 +43,8 @@ export interface VercelDeployment {
 
 export interface VercelProjectDetail extends VercelProject {
   deployments: VercelDeployment[];
+  domains: { name: string; verified: boolean }[];
+  redeployId: string | null;
 }
 
 function authHeaders(token: string) {
@@ -139,5 +143,43 @@ export async function getVercelProject(
     createdAt: d.createdAt ?? null,
     target: d.target ?? null,
   }));
-  return { ...base, deployments };
+  const firstDeploy = p.latestDeployments?.[0];
+  const redeployId = firstDeploy?.uid ?? firstDeploy?.id ?? null;
+
+  // domény projektu (best-effort)
+  let domains: { name: string; verified: boolean }[] = [];
+  try {
+    const domRes = await fetch(`${BASE}/v9/projects/${idOrName}/domains${q}`, {
+      headers: authHeaders(token),
+      cache: "no-store",
+    });
+    if (domRes.ok) {
+      const dd = (await domRes.json()) as { domains?: { name: string; verified?: boolean }[] };
+      domains = (dd.domains ?? []).map((d) => ({ name: d.name, verified: !!d.verified }));
+    }
+  } catch {
+    // ignore
+  }
+
+  return { ...base, deployments, domains, redeployId };
+}
+
+// Spustí nový (re)deploy projektu z posledního deploye.
+export async function redeployProject(
+  deploymentId: string,
+  name: string,
+): Promise<{ id: string; url: string | null }> {
+  const token = requireToken();
+  const team = process.env.VERCEL_TEAM_ID;
+  const q = team ? `?teamId=${team}` : "";
+  const res = await fetch(`${BASE}/v13/deployments${q}`, {
+    method: "POST",
+    headers: { ...authHeaders(token), "content-type": "application/json" },
+    body: JSON.stringify({ name, deploymentId, target: "production" }),
+  });
+  const d = (await res.json()) as { id?: string; url?: string; error?: { message?: string } };
+  if (!res.ok) {
+    throw new Error(`Vercel redeploy ${res.status}: ${d.error?.message ?? "chyba"}`);
+  }
+  return { id: d.id ?? "", url: d.url ? `https://${d.url}` : null };
 }

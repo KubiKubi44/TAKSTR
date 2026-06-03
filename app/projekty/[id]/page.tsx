@@ -6,6 +6,7 @@ import { HealthBadge } from "@/components/health-badge";
 import { PageContainer } from "@/components/page-shell";
 import { ProjectCardActions } from "@/components/project-card-actions";
 import { ProjectMetaForm } from "@/components/project-meta-form";
+import { RedeployButton } from "@/components/redeploy-button";
 import { Card } from "@/components/ui/card";
 import { getProjectMeta, getProjectMetaById } from "@/db/queries";
 import { getVercelProject } from "@/lib/vercel";
@@ -203,6 +204,7 @@ export default async function ProjectDetailPage({
           <a href={project.dashboardUrl} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary">
             Vercel ↗
           </a>
+          <RedeployButton projectId={project.id} />
           <ProjectCardActions
             id={project.id}
             isVercel
@@ -241,6 +243,31 @@ export default async function ProjectDetailPage({
               Otevřít Vercel Analytics ↗
             </a>
           </Card>
+
+          {project.domains.length > 0 && (
+            <Card className="gap-2 p-5">
+              <h2 className="font-heading text-sm font-semibold">Domény</h2>
+              <ul className="space-y-1 text-sm">
+                {project.domains.map((d) => (
+                  <li key={d.name} className="flex items-center justify-between gap-2">
+                    <a
+                      href={`https://${d.name}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="truncate font-mono text-xs hover:text-primary"
+                    >
+                      {d.name}
+                    </a>
+                    <span
+                      className={`shrink-0 font-mono text-[10px] uppercase tracking-wider ${d.verified ? "text-primary" : "text-muted-foreground"}`}
+                    >
+                      {d.verified ? "ověřeno" : "nenastaveno"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           <Card className="gap-3 p-5">
             <h2 className="font-heading text-sm font-semibold">Poslední deploye</h2>
