@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 
-// Apple-style: jeden čistý sans (Geist ~ San Francisco) na text i nadpisy,
-// Geist Mono na čísla / stavy / ID.
+// Apple-style: jeden čistý sans (Geist ~ San Francisco) na všechno —
+// text, nadpisy i čísla/stavy (zarovnání čísel přes tabular-nums).
 const geistSans = Geist({
   variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -30,7 +25,7 @@ export default function RootLayout({
   return (
     <html
       lang="cs"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
