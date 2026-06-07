@@ -135,7 +135,7 @@ export function DemandList({ items }: { items: DemandRow[] }) {
           {shown.map((it) => (
             <Card
               key={it.id}
-              className="flex flex-row flex-wrap items-center gap-3 p-4"
+              className="glass-hover flex flex-row flex-wrap items-center gap-3 p-4"
             >
               {it.status === "new" && (
                 <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" title="nová" />

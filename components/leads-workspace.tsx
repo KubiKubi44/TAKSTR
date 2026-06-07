@@ -299,7 +299,7 @@ export function LeadsWorkspace({
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/lead", l.id)}
                       className={cn(
-                        "glass cursor-grab rounded-xl p-2 transition-shadow hover:shadow-lg active:cursor-grabbing",
+                        "glass glass-hover cursor-grab rounded-xl p-2 active:cursor-grabbing",
                       )}
                     >
                       <Link href={`/leady/${l.id}`} className="block text-sm hover:text-primary">

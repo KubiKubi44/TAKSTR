@@ -4,36 +4,66 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Apple „Liquid Glass" — průsvitný frosted panel s blurem a světelným okrajem. */
+/* ── Apple „Liquid Glass" ───────────────────────────────────────
+   Průsvitný frosted panel: silný blur + saturace pozadí, specular
+   highlight v levém horním rohu, světelná horní hrana a refrakční
+   lem, měkký plovoucí stín. Pod sklem je barevná mlha (body::before),
+   kterou sklo láme — proto výplň držíme dost průsvitnou.            */
 @utility glass {
-  /* sheen (světlo přejíždějící horní část) + průsvitná výplň */
   background-image:
-    linear-gradient(to bottom, oklch(1 0 0 / 0.08), oklch(1 0 0 / 0) 42%),
+    /* specular highlight (lesk skla) v levém horním rohu */
+    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.16), transparent 46%),
+    /* horní sheen */
+    linear-gradient(to bottom, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 34%),
+    /* průsvitné tělo */
     linear-gradient(180deg,
-      color-mix(in oklch, var(--card) 50%, transparent),
-      color-mix(in oklch, var(--card) 64%, transparent));
-  -webkit-backdrop-filter: blur(24px) saturate(190%) brightness(1.04);
-  backdrop-filter: blur(24px) saturate(190%) brightness(1.04);
-  border: 1px solid oklch(1 0 0 / 0.12);
+      color-mix(in oklch, var(--card) 42%, transparent),
+      color-mix(in oklch, var(--card) 60%, transparent));
+  -webkit-backdrop-filter: blur(28px) saturate(185%) brightness(1.06);
+  backdrop-filter: blur(28px) saturate(185%) brightness(1.06);
+  border: 1px solid oklch(1 0 0 / 0.1);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.2), /* světelná horní hrana */
-    inset 0 -24px 48px -36px oklch(0 0 0 / 0.55), /* hloubka u dna */
-    0 16px 44px -18px oklch(0 0 0 / 0.6); /* plovoucí stín */
+    inset 0 1px 0 0 oklch(1 0 0 / 0.22), /* světelná horní hrana */
+    inset 0 0 0 1px oklch(1 0 0 / 0.04), /* jemný vnitřní lem */
+    inset 0 -34px 50px -42px oklch(0 0 0 / 0.45), /* hloubka u dna */
+    0 20px 50px -24px oklch(0 0 0 / 0.5); /* plovoucí stín */
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.4s ease,
+    border-color 0.4s ease;
 }
 
 @utility glass-strong {
   background-image:
-    linear-gradient(to bottom, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 40%),
+    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.18), transparent 44%),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.12), oklch(1 0 0 / 0) 36%),
     linear-gradient(180deg,
-      color-mix(in oklch, var(--popover) 62%, transparent),
-      color-mix(in oklch, var(--popover) 76%, transparent));
-  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.05);
-  backdrop-filter: blur(32px) saturate(200%) brightness(1.05);
+      color-mix(in oklch, var(--popover) 60%, transparent),
+      color-mix(in oklch, var(--popover) 74%, transparent));
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.07);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.07);
   border: 1px solid oklch(1 0 0 / 0.14);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
-    inset 0 -28px 56px -40px oklch(0 0 0 / 0.6),
-    0 24px 60px -18px oklch(0 0 0 / 0.7);
+    inset 0 1px 0 0 oklch(1 0 0 / 0.26),
+    inset 0 0 0 1px oklch(1 0 0 / 0.05),
+    inset 0 -30px 56px -42px oklch(0 0 0 / 0.55),
+    0 28px 64px -22px oklch(0 0 0 / 0.65);
+}
+
+/* Interaktivní sklo — jemný „zdvih" a rozjasnění lemu při najetí. */
+@utility glass-hover {
+  cursor: pointer;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: oklch(1 0 0 / 0.2);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 0.32),
+      inset 0 0 0 1px oklch(1 0 0 / 0.06),
+      0 30px 66px -24px oklch(0 0 0 / 0.7);
+  }
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 @theme inline {
@@ -104,7 +134,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.9rem;
+  --radius: 1rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -154,17 +184,41 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(48rem 48rem at 12% -8%, oklch(0.72 0.14 235 / 0.16), transparent 60%),
-      radial-gradient(42rem 42rem at 100% 6%, oklch(0.62 0.16 285 / 0.13), transparent 58%),
-      radial-gradient(44rem 38rem at 86% 112%, oklch(0.65 0.12 200 / 0.1), transparent 60%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-  }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    position: relative;
+  }
+  /* Barevná mlha pod sklem (fixní, neroluje) — to, co sklo láme. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(58rem 58rem at 6% -10%, oklch(0.72 0.16 235 / 0.22), transparent 60%),
+      radial-gradient(50rem 50rem at 104% 2%, oklch(0.6 0.18 300 / 0.17), transparent 56%),
+      radial-gradient(48rem 42rem at 90% 112%, oklch(0.66 0.15 200 / 0.15), transparent 60%),
+      radial-gradient(40rem 40rem at 44% 48%, oklch(0.5 0.13 265 / 0.08), transparent 72%);
+  }
+  /* Jemné zrno pro „frosted" realismus skla. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+  }
+  ::selection {
+    background: oklch(0.78 0.12 235 / 0.32);
+    color: oklch(0.99 0 0);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;

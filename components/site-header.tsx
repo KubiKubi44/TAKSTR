@@ -36,10 +36,10 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
       key={item.href}
       href={item.href}
       className={cn(
-        "-mb-px flex items-center border-b-2 transition-colors",
+        "rounded-full px-3 py-1.5 transition-colors",
         isActive(item.href)
-          ? "border-primary text-foreground"
-          : "border-transparent text-muted-foreground hover:text-foreground",
+          ? "bg-white/10 text-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.16)]"
+          : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
       )}
     >
       {item.label}
@@ -47,18 +47,16 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
   );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-background/40 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 max-w-6xl items-stretch justify-between px-6">
-        <nav className="flex items-stretch gap-6 text-sm">
-          {LEFT_NAV.map(renderLink)}
-        </nav>
-        <nav className="flex items-stretch gap-6 text-sm">
+    <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-background/55 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.06)] backdrop-blur-2xl backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 text-sm">
+        <nav className="flex items-center gap-1">{LEFT_NAV.map(renderLink)}</nav>
+        <nav className="flex items-center gap-1">
           {RIGHT_NAV.map(renderLink)}
           {authEnabled && (
             <button
               type="button"
               onClick={logout}
-              className="flex items-center text-muted-foreground transition-colors hover:text-foreground"
+              className="ml-1 rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
             >
               Odhlásit
             </button>
