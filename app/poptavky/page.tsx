@@ -13,6 +13,7 @@ export default async function DemandPage() {
     url: r.url,
     category: r.category,
     status: r.status,
+    postedAt: r.postedAt ? r.postedAt.toISOString() : null,
     createdAt: r.createdAt,
   }));
 

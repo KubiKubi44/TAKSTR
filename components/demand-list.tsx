@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface DemandRow {
   id: string;
@@ -13,7 +20,13 @@ export interface DemandRow {
   url: string;
   category: string | null;
   status: string;
+  postedAt: string | null;
   createdAt: string | Date;
+}
+
+// datum poptávky, jinak kdy jsme ji poprvé viděli
+function effectiveDate(it: DemandRow): Date {
+  return new Date(it.postedAt ?? it.createdAt);
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -32,9 +45,21 @@ function fmt(d: string | Date): string {
   return new Date(d).toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit" });
 }
 
+const RANGE_DAYS: Record<string, number> = { "1": 1, "7": 7, "30": 30 };
+
 export function DemandList({ items }: { items: DemandRow[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [range, setRange] = useState("all");
+  // „teď" zachycené jednorázově při mountu (Date.now nesmí být v renderu)
+  const [now] = useState(() => Date.now());
+
+  const shown = useMemo(() => {
+    if (range === "all") return items;
+    const days = RANGE_DAYS[range] ?? 0;
+    const cutoff = now - days * 86400000;
+    return items.filter((it) => effectiveDate(it).getTime() >= cutoff);
+  }, [items, range, now]);
 
   async function refresh() {
     setBusy(true);
@@ -80,20 +105,33 @@ export function DemandList({ items }: { items: DemandRow[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Button size="sm" variant="outline" disabled={busy} onClick={refresh}>
           {busy ? "Stahuji…" : "Obnovit teď"}
         </Button>
-        <span className="font-mono text-xs text-muted-foreground">{items.length} poptávek</span>
+        <Select value={range} onValueChange={(v) => setRange(v ?? "all")}>
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="Období" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Všechna data</SelectItem>
+            <SelectItem value="1">Dnes</SelectItem>
+            <SelectItem value="7">Posledních 7 dní</SelectItem>
+            <SelectItem value="30">Posledních 30 dní</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="font-mono text-xs text-muted-foreground">{shown.length} poptávek</span>
       </div>
 
-      {items.length === 0 ? (
+      {shown.length === 0 ? (
         <Card className="p-6 text-sm text-muted-foreground">
-          Zatím žádné poptávky. Klikni na „Obnovit teď“ — stáhnu nové z Poptávej a ePoptávka.
+          {items.length === 0
+            ? "Zatím žádné poptávky. Klikni na „Obnovit teď“ — stáhnu nové z Poptávej a ePoptávka."
+            : "V tomto období nic. Zkus delší rozsah."}
         </Card>
       ) : (
         <div className="space-y-2">
-          {items.map((it) => (
+          {shown.map((it) => (
             <Card
               key={it.id}
               className="flex flex-row flex-wrap items-center gap-3 p-4"
@@ -113,7 +151,7 @@ export function DemandList({ items }: { items: DemandRow[] }) {
                 <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   <span>{SOURCE_LABEL[it.source] ?? it.source}</span>
                   {it.category && <span>· {it.category}</span>}
-                  <span>· {fmt(it.createdAt)}</span>
+                  <span>· {fmt(effectiveDate(it))}</span>
                   {it.status !== "new" && <span>· {STATUS_LABEL[it.status] ?? it.status}</span>}
                 </div>
               </div>

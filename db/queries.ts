@@ -98,7 +98,7 @@ export async function listDemand(opts: { status?: DemandStatus } = {}) {
     where: opts.status
       ? eq(demandLead.status, opts.status)
       : sql`${demandLead.status} <> 'dismissed'`,
-    orderBy: [desc(demandLead.createdAt)],
+    orderBy: [sql`${demandLead.postedAt} desc nulls last`, desc(demandLead.createdAt)],
     limit: 200,
   });
 }

@@ -31,6 +31,15 @@ export interface DemandItem {
   title: string;
   url: string;
   category: string | null;
+  postedAt: Date | null;
+}
+
+// České datum „4. 6. 2026" i „5.6.2026" → Date (půlnoc UTC). null při neúspěchu.
+function parseCzDate(s: string): Date | null {
+  const m = s.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1])));
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 async function getHtml(url: string): Promise<cheerio.CheerioAPI | null> {
@@ -52,22 +61,25 @@ function idFromPoptavkaHref(href: string): string | null {
   return m ? m[1] : null;
 }
 
-// ── Poptávej.cz — obecný výpis, filtrujeme dle titulku ───────
+// ── Poptávej.cz — obecný výpis (řádky s datem + oborem) ──────
 async function fetchPoptavej(): Promise<DemandItem[]> {
   const $ = await getHtml("https://www.poptavej.cz/poptavky");
   if (!$) return [];
   const out = new Map<string, DemandItem>();
-  $('a[href^="/poptavka/"]').each((_, el) => {
-    const href = $(el).attr("href") ?? "";
+  $(".row.demand").each((_, row) => {
+    const $r = $(row);
+    const a = $r.find('.nazev a[href^="/poptavka/"]').first();
+    const href = a.attr("href") ?? "";
     const id = idFromPoptavkaHref(href);
-    const title = $(el).text().replace(/\s+/g, " ").trim();
+    const title = a.text().replace(/\s+/g, " ").trim();
     if (!id || title.length < 6 || !isRelevant(title)) return;
     out.set(id, {
       source: "poptavej",
       externalId: id,
       title,
       url: `https://www.poptavej.cz${href}`,
-      category: null,
+      category: $r.find("a.category").first().text().trim() || null,
+      postedAt: parseCzDate($r.find(".date").first().text()),
     });
   });
   return [...out.values()];
@@ -82,24 +94,41 @@ async function fetchEpoptavka(): Promise<DemandItem[]> {
     const $ = await getHtml(`https://poptavky.epoptavka.cz/${cat}`);
     if (!$) continue;
     $('a[href*="/poptavka/"]').each((_, el) => {
-      const href = $(el).attr("href") ?? "";
+      const $a = $(el);
+      const href = $a.attr("href") ?? "";
       const id = idFromPoptavkaHref(href);
-      let title = $(el).text().replace(/\s+/g, " ").trim();
-      // fallback: titulek ze slugu, když je anchor prázdný
-      if (title.length < 6) {
+      // titulek z <h4> (kartový odkaz); fallback ze slugu
+      let title = $a.find("h4").text().replace(/\s+/g, " ").trim();
+      if (!title) {
         const slug = href.match(/\/poptavka\/\d+-([a-z0-9-]+)/)?.[1];
         if (slug) title = slug.replace(/-/g, " ");
       }
       if (!id || title.length < 6 || !isRelevant(title)) return;
       const url = href.startsWith("http") ? href : `https://poptavky.epoptavka.cz${href}`;
-      out.set(id, { source: "epoptavka", externalId: id, title, url, category: cat });
+      // datum: <i class="fa-calendar"></i> 4. 6. 2026 v sousedním <ul>
+      const dateText = $a.parent().find("i.fa-calendar").first().parent().text();
+      out.set(id, {
+        source: "epoptavka",
+        externalId: id,
+        title,
+        url,
+        category: cat,
+        postedAt: parseCzDate(dateText),
+      });
     });
   }
   return [...out.values()];
 }
 
+// Registr zdrojů — přidání dalšího portálu = jen další položka.
+// (Freelance.cz je SPA s neveřejným JSON API — TODO reverse-engineer.)
+export const DEMAND_SOURCES: Array<() => Promise<DemandItem[]>> = [
+  fetchPoptavej,
+  fetchEpoptavka,
+];
+
 export async function collectDemand(): Promise<DemandItem[]> {
-  const results = await Promise.allSettled([fetchPoptavej(), fetchEpoptavka()]);
+  const results = await Promise.allSettled(DEMAND_SOURCES.map((fn) => fn()));
   return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }
 
@@ -121,6 +150,7 @@ export async function pollDemand(): Promise<{
         title: it.title,
         url: it.url,
         category: it.category,
+        postedAt: it.postedAt,
       })
       .onConflictDoNothing({
         target: [demandLead.source, demandLead.externalId],
