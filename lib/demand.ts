@@ -120,11 +120,62 @@ async function fetchEpoptavka(): Promise<DemandItem[]> {
   return [...out.values()];
 }
 
+// ── Freelance.cz — JSON API (POST), kategorie blízké studiu ──
+// Endpoint: POST /api/ui/projects/search  body {category, locale}
+// (pozor: filtruje pole `category`, ne `categoryId` — to vrací vše)
+// → { projects: [{ id, projectTitle, linkToDetail, lastUpdate }] }
+const FREELANCE_CATEGORIES = ["web", "grafika-design", "digitalni-marketing"];
+
+interface FreelanceProject {
+  id?: number;
+  projectTitle?: string;
+  linkToDetail?: string;
+  lastUpdate?: string;
+}
+
+async function fetchFreelance(): Promise<DemandItem[]> {
+  const out = new Map<string, DemandItem>();
+  for (const cat of FREELANCE_CATEGORIES) {
+    try {
+      const res = await fetchWithTimeout("https://www.freelance.cz/api/ui/projects/search", {
+        method: "POST",
+        timeoutMs: 12000,
+        headers: {
+          "user-agent": BROWSER_UA,
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({ category: cat, locale: "cs" }),
+      });
+      if (!res.ok) continue;
+      const json = (await res.json()) as { projects?: FreelanceProject[] };
+      for (const p of json.projects ?? []) {
+        const id = p.id != null ? String(p.id) : null;
+        const title = (p.projectTitle ?? "").replace(/\s+/g, " ").trim();
+        const href = p.linkToDetail ?? "";
+        // projekty jsou už oborově dané (web/grafika/marketing) → bez keyword filtru
+        if (!id || title.length < 4 || !href) continue;
+        out.set(id, {
+          source: "freelance",
+          externalId: id,
+          title,
+          url: href.startsWith("http") ? href : `https://www.freelance.cz${href}`,
+          category: cat,
+          postedAt: p.lastUpdate ? new Date(p.lastUpdate) : null,
+        });
+      }
+    } catch {
+      // best-effort
+    }
+  }
+  return [...out.values()];
+}
+
 // Registr zdrojů — přidání dalšího portálu = jen další položka.
-// (Freelance.cz je SPA s neveřejným JSON API — TODO reverse-engineer.)
 export const DEMAND_SOURCES: Array<() => Promise<DemandItem[]>> = [
   fetchPoptavej,
   fetchEpoptavka,
+  fetchFreelance,
 ];
 
 export async function collectDemand(): Promise<DemandItem[]> {

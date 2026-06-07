@@ -32,6 +32,7 @@ function effectiveDate(it: DemandRow): Date {
 const SOURCE_LABEL: Record<string, string> = {
   poptavej: "Poptávej",
   epoptavka: "ePoptávka",
+  freelance: "Freelance.cz",
 };
 
 const STATUS_LABEL: Record<string, string> = {
