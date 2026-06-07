@@ -334,17 +334,39 @@ export default async function LeadDetailPage({
                 Zatím nezanalyzováno.
               </p>
             ) : (
-              <dl className="space-y-1 text-sm">
-                <Row k="Builder" v={analysis.builder ?? "neznámý"} />
-                <Row k="Mobilní (viewport)" v={analysis.mobileOk ? "ano" : "NE"} />
-                <Row k="Anglická verze" v={analysis.hasEn ? "ano" : "ne"} />
-                <Row k="PageSpeed" v={analysis.pagespeed?.toString() ?? "neměřeno"} />
-                <Row
-                  k="Délka textu"
-                  v={`${analysis.textExcerpt?.length ?? 0} zn.`}
-                />
-                <Row k="Analyzováno" v={fmt(analysis.analyzedAt)} />
-              </dl>
+              (() => {
+                const sig = analysis.signals as Record<string, unknown>;
+                const n = (v: unknown) => (typeof v === "number" ? v : null);
+                const sslDays = n(sig.sslDaysLeft);
+                const domDays = n(sig.domainDaysLeft);
+                const httpsOk = sig.httpsOk === true;
+                const gen = typeof sig.generator === "string" ? sig.generator : null;
+                const year = n(sig.footerYear);
+                return (
+                  <dl className="space-y-1 text-sm">
+                    <Row k="Builder / stack" v={analysis.builder ?? gen ?? "neznámý"} />
+                    <Row k="Mobilní (viewport)" v={analysis.mobileOk ? "ano" : "NE"} />
+                    <Row
+                      k="HTTPS / SSL"
+                      v={
+                        !httpsOk
+                          ? "NE"
+                          : sslDays != null
+                            ? `ano (${sslDays} dní)`
+                            : "ano"
+                      }
+                    />
+                    {domDays != null && (
+                      <Row k="Doména vyprší" v={`za ${domDays} dní`} />
+                    )}
+                    {year != null && <Row k="Rok v patičce" v={String(year)} />}
+                    <Row k="Anglická verze" v={analysis.hasEn ? "ano" : "ne"} />
+                    <Row k="PageSpeed" v={analysis.pagespeed?.toString() ?? "neměřeno"} />
+                    <Row k="Délka textu" v={`${analysis.textExcerpt?.length ?? 0} zn.`} />
+                    <Row k="Analyzováno" v={fmt(analysis.analyzedAt)} />
+                  </dl>
+                );
+              })()
             )}
           </Card>
 

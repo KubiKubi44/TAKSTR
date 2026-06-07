@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { fetchWithTimeout } from "./http";
 import { extractPageSignals, type PageSignals } from "./signals";
+import { checkDomainExpiry, checkTls, registrableDomain } from "./techcheck";
 import { hostnameOf } from "./url";
 
 // Hloubková analýza vybraného leadu: plné stažení stránky + cheerio.
@@ -8,6 +9,20 @@ import { hostnameOf } from "./url";
 // a volitelně PageSpeed. Výstup se ukládá do site_analysis.
 
 const TEXT_EXCERPT_MAX = 6000;
+const STALE_YEARS = 3; // rok v patičce takhle starý = zanedbaný web
+
+// Nejnovější 4místný rok z patičky (fallback celý text). Stará = zanedbaná.
+function detectFooterYear($: cheerio.CheerioAPI): number | null {
+  const now = new Date().getFullYear();
+  const footer = $("footer").text() || $("body").text().slice(-800);
+  const grab = (text: string): number | null => {
+    const years = [...text.matchAll(/\b(19|20)\d{2}\b/g)]
+      .map((m) => Number(m[0]))
+      .filter((y) => y >= 1995 && y <= now + 1);
+    return years.length ? Math.max(...years) : null;
+  };
+  return grab(footer) ?? grab($("body").text());
+}
 
 // přípony, které vypadají jako e-mail, ale jsou to obrázky/soubory
 const IMAGE_LIKE = /\.(png|jpe?g|gif|svg|webp|bmp|ico|tiff?)$/i;
@@ -70,6 +85,14 @@ async function fetchPageSpeed(url: string): Promise<number | null> {
   }
 }
 
+// Příznaky „umírajícího" webu pro lead.flags (zvedají skóre příležitosti).
+export interface TechFlags {
+  noHttps?: boolean;
+  sslExpired?: boolean;
+  domainExpiringSoon?: boolean;
+  techStale?: boolean;
+}
+
 export interface AnalyzerResult {
   builder: string | null;
   mobileOk: boolean;
@@ -77,12 +100,23 @@ export interface AnalyzerResult {
   pagespeed: number | null;
   contactEmail: string | null;
   textExcerpt: string;
+  // příznaky k zapsání do lead.flags (merge)
+  flags: TechFlags;
   // do site_analysis.signals (jsonb) — cokoliv navíc bez změny schématu
   signals: PageSignals & {
     fetchedUrl: string;
     httpStatus: number;
     hasEn: boolean;
     contactEmail: string | null;
+    generator: string | null;
+    footerYear: number | null;
+    yearsStale: number | null;
+    httpsOk: boolean;
+    sslValid: boolean;
+    sslDaysLeft: number | null;
+    domainExpiresAt: string | null;
+    domainDaysLeft: number | null;
+    problems: string[];
   };
 }
 
@@ -99,7 +133,47 @@ export async function analyzeWebsite(url: string): Promise<AnalyzerResult> {
   const hasEn = base.langs.includes("en");
   const contactEmail = extractEmail($, html, hostnameOf(finalUrl));
   const textExcerpt = extractText($);
-  const pagespeed = await fetchPageSpeed(finalUrl);
+  const generator = $('meta[name="generator"]').attr("content") ?? null;
+
+  const now = new Date().getFullYear();
+  const footerYear = detectFooterYear($);
+  const yearsStale = footerYear != null ? now - footerYear : null;
+
+  const host = hostnameOf(finalUrl);
+  const domain = host ? registrableDomain(host) : null;
+
+  // SSL, doména a PageSpeed paralelně — každé best-effort
+  const [pagespeed, tls, domainExp] = await Promise.all([
+    fetchPageSpeed(finalUrl),
+    host ? checkTls(host) : Promise.resolve(null),
+    domain ? checkDomainExpiry(domain) : Promise.resolve(null),
+  ]);
+
+  const httpsOk = base.isHttps && (tls?.valid ?? false);
+  const sslValid = tls?.valid ?? false;
+  const sslDaysLeft = tls?.daysLeft ?? null;
+  const domainDaysLeft = domainExp?.daysLeft ?? null;
+
+  // odvozené příznaky
+  const sslExpired = base.isHttps && tls != null && (!tls.valid || (sslDaysLeft != null && sslDaysLeft < 0));
+  const domainExpiringSoon = domainDaysLeft != null && domainDaysLeft < 45;
+  const techStale = base.isDiy || (yearsStale != null && yearsStale >= STALE_YEARS);
+
+  const problems: string[] = [];
+  if (!base.isHttps) problems.push("web neběží na HTTPS");
+  else if (sslExpired) problems.push("neplatný / prošlý SSL certifikát");
+  else if (sslDaysLeft != null && sslDaysLeft < 21) problems.push(`SSL vyprší za ${sslDaysLeft} dní`);
+  if (domainExpiringSoon)
+    problems.push(domainDaysLeft! < 0 ? "doména po expiraci" : `doména vyprší za ${domainDaysLeft} dní`);
+  if (yearsStale != null && yearsStale >= STALE_YEARS) problems.push(`patička z roku ${footerYear}`);
+  if (base.isDiy) problems.push(`stavebnicový web (${base.builder})`);
+  if (!base.hasViewport) problems.push("není uzpůsoben mobilu");
+
+  const flags: TechFlags = {};
+  if (!base.isHttps) flags.noHttps = true;
+  if (sslExpired) flags.sslExpired = true;
+  if (domainExpiringSoon) flags.domainExpiringSoon = true;
+  if (techStale) flags.techStale = true;
 
   return {
     builder: base.builder,
@@ -108,12 +182,22 @@ export async function analyzeWebsite(url: string): Promise<AnalyzerResult> {
     pagespeed,
     contactEmail,
     textExcerpt,
+    flags,
     signals: {
       ...base,
       fetchedUrl: finalUrl,
       httpStatus: res.status,
       hasEn,
       contactEmail,
+      generator,
+      footerYear,
+      yearsStale,
+      httpsOk,
+      sslValid,
+      sslDaysLeft,
+      domainExpiresAt: domainExp?.expiresAt ?? null,
+      domainDaysLeft,
+      problems,
     },
   };
 }

@@ -53,6 +53,22 @@ export function computeOpportunity(input: OpportunityInput): OpportunityScore {
     need = 40; // neznámé (ruční/telegram lead bez triáže)
   }
 
+  // „Web umírá" signály z analýzy. SSL/doména triáž nehlídá → přičti vždy;
+  // noHttps/techStale jsou už v triážním skóre → přičti jen u neoskórovaných.
+  if (f.sslExpired) {
+    need += 12;
+    reasons.push("prošlé SSL");
+  }
+  if (f.domainExpiringSoon) {
+    need += 12;
+    reasons.push("doména brzy expiruje");
+  }
+  if (input.score == null) {
+    if (f.noHttps) need += 8;
+    if (f.techStale) need += 10;
+  }
+  need = clamp(need);
+
   // ── BONITA (má firma peníze?) ────────────────────────────
   let money = 40;
   let moneyKnown = false;

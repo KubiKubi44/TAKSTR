@@ -73,6 +73,14 @@ export async function analyzeLead(leadId: string, actor: ActivityActor) {
     contactEmailSet = true;
   }
 
+  // příznaky „umírajícího" webu → lead.flags (vstup pro skóre příležitosti)
+  if (Object.keys(result.flags).length > 0) {
+    await db
+      .update(lead)
+      .set({ flags: { ...row.flags, ...result.flags } })
+      .where(eq(lead.id, row.id));
+  }
+
   await updateLeadStatus({
     leadId: row.id,
     status: "analyzed",
