@@ -11,22 +11,22 @@
    kterou sklo láme — proto výplň držíme dost průsvitnou.            */
 @utility glass {
   background-image:
-    /* specular highlight (lesk skla) v levém horním rohu */
-    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.22), transparent 46%),
-    /* horní sheen — lesklý pruh */
-    linear-gradient(to bottom, oklch(1 0 0 / 0.14), oklch(1 0 0 / 0) 32%),
+    /* jemný specular v rohu (matnější sklo) */
+    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.08), transparent 48%),
+    /* lehký horní sheen */
+    linear-gradient(to bottom, oklch(1 0 0 / 0.05), oklch(1 0 0 / 0) 30%),
     /* průsvitné tělo */
     linear-gradient(180deg,
-      color-mix(in oklch, var(--card) 42%, transparent),
-      color-mix(in oklch, var(--card) 60%, transparent));
-  -webkit-backdrop-filter: blur(28px) saturate(140%) brightness(1.08);
-  backdrop-filter: blur(28px) saturate(140%) brightness(1.08);
-  border: 1px solid oklch(1 0 0 / 0.1);
+      color-mix(in oklch, var(--card) 46%, transparent),
+      color-mix(in oklch, var(--card) 64%, transparent));
+  -webkit-backdrop-filter: blur(26px) saturate(120%) brightness(1.03);
+  backdrop-filter: blur(26px) saturate(120%) brightness(1.03);
+  border: 1px solid oklch(1 0 0 / 0.09);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.34), /* lesklá horní hrana */
-    inset 0 0 0 1px oklch(1 0 0 / 0.05), /* jemný vnitřní lem */
-    inset 0 -34px 50px -42px oklch(0 0 0 / 0.45), /* hloubka u dna */
-    0 20px 50px -24px oklch(0 0 0 / 0.5); /* plovoucí stín */
+    inset 0 1px 0 0 oklch(1 0 0 / 0.14), /* jemná horní hrana */
+    inset 0 0 0 1px oklch(1 0 0 / 0.03), /* vnitřní lem */
+    inset 0 -34px 50px -42px oklch(0 0 0 / 0.4), /* hloubka u dna */
+    0 18px 46px -24px oklch(0 0 0 / 0.5); /* plovoucí stín */
   transition:
     transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
     box-shadow 0.4s ease,
@@ -55,11 +55,11 @@
   cursor: pointer;
   &:hover {
     transform: translateY(-2px);
-    border-color: oklch(1 0 0 / 0.2);
+    border-color: oklch(1 0 0 / 0.16);
     box-shadow:
-      inset 0 1px 0 0 oklch(1 0 0 / 0.32),
-      inset 0 0 0 1px oklch(1 0 0 / 0.06),
-      0 30px 66px -24px oklch(0 0 0 / 0.7);
+      inset 0 1px 0 0 oklch(1 0 0 / 0.18),
+      inset 0 0 0 1px oklch(1 0 0 / 0.05),
+      0 28px 60px -24px oklch(0 0 0 / 0.65);
   }
   &:active {
     transform: translateY(0);
@@ -147,7 +147,7 @@
 
 .dark {
   /* Premium Monochrome — čistě neutrální černobílá, akcent = near-white */
-  --background: oklch(0.135 0 0);
+  --background: oklch(0.09 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -201,12 +201,14 @@
     z-index: -2;
     background-color: var(--background);
     background-image:
-      /* stříbřité světlo (bez barvy) — sklo má co odrážet */
-      radial-gradient(60rem 60rem at 8% -12%, oklch(0.99 0 0 / 0.08), transparent 58%),
-      radial-gradient(48rem 48rem at 102% 0%, oklch(0.92 0 0 / 0.05), transparent 55%),
-      radial-gradient(44rem 40rem at 92% 114%, oklch(0.88 0 0 / 0.04), transparent 60%),
-      /* prémiová vinětace — ztmavení k okrajům pro hloubku */
-      radial-gradient(130% 120% at 50% -8%, transparent 54%, oklch(0 0 0 / 0.5));
+      /* lesklý horní odraz — světlo na leštěné černé (piano black) */
+      radial-gradient(92rem 46rem at 50% -22%, oklch(1 0 0 / 0.12), transparent 62%),
+      /* jemné boční světlo */
+      radial-gradient(56rem 56rem at 102% -6%, oklch(0.85 0 0 / 0.05), transparent 55%),
+      /* lesklý vertikální spád černé */
+      linear-gradient(180deg, oklch(0.13 0 0) 0%, oklch(0.075 0 0) 56%, oklch(0.05 0 0) 100%),
+      /* vinětace k okrajům pro hloubku */
+      radial-gradient(130% 115% at 50% -6%, transparent 52%, oklch(0 0 0 / 0.55));
   }
   /* Jemné zrno pro „frosted" realismus skla. */
   body::after {
@@ -215,7 +217,7 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    opacity: 0.04;
+    opacity: 0.022;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 140px 140px;
   }
