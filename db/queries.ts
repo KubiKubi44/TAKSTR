@@ -3,11 +3,13 @@ import { db } from "./client";
 import {
   calendarEvent,
   campaign,
+  demandLead,
   expense,
   lead,
   outreach,
   projectMeta,
   task,
+  type DemandStatus,
   type LeadStatus,
 } from "./schema";
 
@@ -89,6 +91,25 @@ export async function listLeads(opts: {
 }
 
 export type LeadListItem = Awaited<ReturnType<typeof listLeads>>[number];
+
+// Teplé poptávky z portálů. Default skryje vyřízené (dismissed).
+export async function listDemand(opts: { status?: DemandStatus } = {}) {
+  return db.query.demandLead.findMany({
+    where: opts.status
+      ? eq(demandLead.status, opts.status)
+      : sql`${demandLead.status} <> 'dismissed'`,
+    orderBy: [desc(demandLead.createdAt)],
+    limit: 200,
+  });
+}
+
+export async function getDemandNewCount(): Promise<number> {
+  const [row] = await db
+    .select({ c: count() })
+    .from(demandLead)
+    .where(eq(demandLead.status, "new"));
+  return row?.c ?? 0;
+}
 
 // Počty leadů podle stavu (trychtýř).
 export async function getStatusCounts(): Promise<Record<LeadStatus, number>> {

@@ -12,6 +12,7 @@ const LEFT_NAV = [
   { href: "/finance", label: "Finance" },
 ];
 const RIGHT_NAV = [
+  { href: "/poptavky", label: "Poptávky" },
   { href: "/kampane", label: "Kampaně" },
   { href: "/leady", label: "Leady" },
 ];

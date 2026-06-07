@@ -74,6 +74,14 @@ export const eventKindEnum = pgEnum("event_kind", ["meeting", "followup"]);
 
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "normal", "high"]);
 
+// poptávka z externího portálu (teplá poptávka „hledám web/eshop")
+export const demandStatusEnum = pgEnum("demand_status", [
+  "new",
+  "seen",
+  "contacted",
+  "dismissed",
+]);
+
 // ─────────────────────────────────────────────────────────────
 // Tabulky
 // ─────────────────────────────────────────────────────────────
@@ -363,6 +371,33 @@ export const expense = pgTable("expense", {
     .$onUpdate(() => new Date()),
 });
 
+// demand_lead — teplá poptávka z portálů (Poptávej, ePoptávka): někdo veřejně
+// shání „web / e-shop / SEO". Monitorujeme a hlásíme; konverze >> cold outreach.
+export const demandLead = pgTable(
+  "demand_lead",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source").notNull(), // "epoptavka" | "poptavej"
+    externalId: text("external_id").notNull(), // id v rámci zdroje (dedup)
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    excerpt: text("excerpt"),
+    category: text("category"),
+    postedAt: timestamp("posted_at", { withTimezone: true }),
+    status: demandStatusEnum("status").default("new").notNull(),
+    // když z poptávky uděláme úkol/lead
+    leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [unique("demand_source_external_uq").on(t.source, t.externalId)],
+);
+
 // telegram_state — krátkodobý stav konverzace bota, klíčovaný chat_id.
 // mode='await_edit' = bot čeká na text s instrukcí k úpravě draftu.
 export const telegramState = pgTable("telegram_state", {
@@ -477,6 +512,9 @@ export type ProjectMeta = typeof projectMeta.$inferSelect;
 export type Expense = typeof expense.$inferSelect;
 export type Task = typeof task.$inferSelect;
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
+export type DemandLead = typeof demandLead.$inferSelect;
+export type NewDemandLead = typeof demandLead.$inferInsert;
+export type DemandStatus = (typeof demandStatusEnum.enumValues)[number];
 export type CalendarEvent = typeof calendarEvent.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
 export type EventKind = (typeof eventKindEnum.enumValues)[number];
