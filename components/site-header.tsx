@@ -4,14 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+// Vlevo = chod firmy (provoz), vpravo = obchod (akvizice)
 const LEFT_NAV = [
-  { href: "/", label: "Dashboard" },
+  { href: "/", label: "Provoz" },
   { href: "/ukoly", label: "Úkoly" },
   { href: "/kalendar", label: "Kalendář" },
   { href: "/projekty", label: "Projekty" },
   { href: "/finance", label: "Finance" },
 ];
 const RIGHT_NAV = [
+  { href: "/obchod", label: "Obchod" },
   { href: "/poptavky", label: "Poptávky" },
   { href: "/kampane", label: "Kampaně" },
   { href: "/leady", label: "Leady" },
