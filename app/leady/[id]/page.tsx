@@ -9,8 +9,10 @@ import { NoteForm } from "@/components/note-form";
 import { QuickAddTask } from "@/components/quick-add-task";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/page-shell";
+import { OpportunityBadge } from "@/components/opportunity-badge";
 import { ScoreBadge } from "@/components/score-badge";
 import { StatusBadge } from "@/components/status-badge";
+import { computeOpportunity } from "@/lib/opportunity";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getLeadWithRelations } from "@/db/queries";
@@ -99,6 +101,13 @@ export default async function LeadDetailPage({
 
   const analysis = lead.analyses[0];
   const latestDraft = lead.drafts.at(-1);
+  const opp = computeOpportunity({
+    score: lead.score,
+    flags: lead.flags,
+    enrichment: lead.enrichment as Record<string, unknown>,
+    contactEmail: lead.contactEmail,
+    phone: lead.phone,
+  });
 
   return (
     <PageContainer wide>
@@ -238,6 +247,26 @@ export default async function LeadDetailPage({
 
         {/* pravý sloupec: kontakt + signály + poznámka */}
         <div className="space-y-6">
+          <Card className="gap-3 p-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-heading text-sm font-semibold">Příležitost</h2>
+              <OpportunityBadge opp={opp} />
+            </div>
+            <div className="space-y-2">
+              <OppBar label="Potřeba" value={opp.need} />
+              <OppBar label="Bonita" value={opp.money} />
+              <OppBar label="Dosažitelnost" value={opp.reach} />
+            </div>
+            {opp.reasons.length > 0 && (
+              <p className="text-xs text-muted-foreground">{opp.reasons.join(" · ")}</p>
+            )}
+            {!opp.moneyKnown && (
+              <p className="text-[11px] text-amber-500/90">
+                Klikni „Obohatit“ — bez bonity (ARES + hodnocení) je skóre jen odhad.
+              </p>
+            )}
+          </Card>
+
           <Card className="gap-2 p-5">
             <h2 className="font-heading text-sm font-semibold">Kontakt</h2>
             <dl className="space-y-1 text-sm">
@@ -413,6 +442,21 @@ function Row({ k, v }: { k: string; v: string }) {
     <div className="flex justify-between gap-2">
       <dt className="text-muted-foreground">{k}</dt>
       <dd className="font-mono text-xs">{v}</dd>
+    </div>
+  );
+}
+
+function OppBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
+      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+        <span
+          className="block h-full bg-primary"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+        />
+      </span>
+      <span className="w-7 text-right font-mono tabular-nums text-muted-foreground">{value}</span>
     </div>
   );
 }

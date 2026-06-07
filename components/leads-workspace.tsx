@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import type { LeadStatus } from "@/db/schema";
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
 import { ScoreBadge } from "@/components/score-badge";
+import { OpportunityBadge } from "@/components/opportunity-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { LeadFlags } from "@/components/lead-flags";
+import { computeOpportunity, type OpportunityScore } from "@/lib/opportunity";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -44,7 +46,20 @@ export interface WorkspaceLead {
   score: number | null;
   status: LeadStatus;
   flags: Record<string, unknown>;
+  enrichment?: Record<string, unknown> | null;
+  contactEmail?: string | null;
+  phone?: string | null;
   campaign?: { name: string } | null;
+}
+
+function oppOf(l: WorkspaceLead): OpportunityScore {
+  return computeOpportunity({
+    score: l.score,
+    flags: l.flags ?? {},
+    enrichment: l.enrichment ?? {},
+    contactEmail: l.contactEmail ?? null,
+    phone: l.phone ?? null,
+  });
 }
 
 export function LeadsWorkspace({
@@ -57,16 +72,19 @@ export function LeadsWorkspace({
   const router = useRouter();
   const [view, setView] = useState("table");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("opp");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
-  const filtered = useMemo(
-    () =>
-      statusFilter === "all"
-        ? leads
-        : leads.filter((l) => l.status === statusFilter),
-    [leads, statusFilter],
-  );
+  const filtered = useMemo(() => {
+    const base =
+      statusFilter === "all" ? leads : leads.filter((l) => l.status === statusFilter);
+    if (sortBy === "score") {
+      return [...base].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+    }
+    // default: podle příležitosti (zlatý lead nahoře)
+    return [...base].sort((a, b) => oppOf(b).score - oppOf(a).score);
+  }, [leads, statusFilter, sortBy]);
 
   const toggle = (id: string) =>
     setSelected((s) => {
@@ -139,19 +157,30 @@ export function LeadsWorkspace({
         </Tabs>
 
         {view === "table" && (
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-            <SelectTrigger size="sm" className="w-44">
-              <SelectValue placeholder="Stav" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Všechny stavy</SelectItem>
-              {LEAD_STATUS_ORDER.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {LEAD_STATUS_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+              <SelectTrigger size="sm" className="w-44">
+                <SelectValue placeholder="Stav" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Všechny stavy</SelectItem>
+                {LEAD_STATUS_ORDER.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {LEAD_STATUS_LABEL[s]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v ?? "opp")}>
+              <SelectTrigger size="sm" className="w-44">
+                <SelectValue placeholder="Řadit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="opp">Podle příležitosti</SelectItem>
+                <SelectItem value="score">Podle skóre webu</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
         )}
 
         <span className="font-mono text-xs text-muted-foreground">
@@ -185,7 +214,8 @@ export function LeadsWorkspace({
                     aria-label="Vybrat vše"
                   />
                 </TableHead>
-                <TableHead className="w-32">Skóre</TableHead>
+                <TableHead className="w-40">Příležitost</TableHead>
+                <TableHead className="w-28">Skóre webu</TableHead>
                 <TableHead className="w-28">Stav</TableHead>
                 <TableHead>Firma</TableHead>
                 <TableHead>Web</TableHead>
@@ -195,7 +225,7 @@ export function LeadsWorkspace({
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={showCampaign ? 6 : 5} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={showCampaign ? 7 : 6} className="py-8 text-center text-sm text-muted-foreground">
                     Žádné leady.
                   </TableCell>
                 </TableRow>
@@ -208,6 +238,9 @@ export function LeadsWorkspace({
                         onCheckedChange={() => toggle(l.id)}
                         aria-label="Vybrat lead"
                       />
+                    </TableCell>
+                    <TableCell>
+                      <OpportunityBadge opp={oppOf(l)} />
                     </TableCell>
                     <TableCell>
                       <ScoreBadge score={l.score} />
@@ -240,7 +273,9 @@ export function LeadsWorkspace({
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-3">
           {LEAD_STATUS_ORDER.map((status) => {
-            const col = leads.filter((l) => l.status === status);
+            const col = leads
+              .filter((l) => l.status === status)
+              .sort((a, b) => oppOf(b).score - oppOf(a).score);
             return (
               <div
                 key={status}
@@ -271,7 +306,7 @@ export function LeadsWorkspace({
                         <span className="block truncate">{l.businessName}</span>
                       </Link>
                       <div className="mt-1 flex items-center justify-between">
-                        <ScoreBadge score={l.score} />
+                        <OpportunityBadge opp={oppOf(l)} />
                       </div>
                     </div>
                   ))}
