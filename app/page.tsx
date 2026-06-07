@@ -47,13 +47,13 @@ export default async function ProvozPage() {
       <PageHeader eyebrow="Chod firmy" title="Provoz" />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Metric label="MRR" value={czk(fin.mrr)} hint={`${revenue.paying} projektů ve správě`} tone="text-primary" />
-        <Metric label="Náklady / měsíc" value={czk(fin.recurringCost)} hint="opakované výdaje" />
+        <Metric label="MRR" value={czk(fin.mrr)} hint={`${revenue.paying} projektů ve správě`} tone="text-success" />
+        <Metric label="Náklady / měsíc" value={czk(fin.recurringCost)} hint="opakované výdaje" tone="text-destructive" />
         <Metric
           label="Čistý zisk / měsíc"
           value={czk(fin.monthlyProfit)}
           hint={`ročně ${czk(fin.annualProfit)}`}
-          tone={fin.monthlyProfit >= 0 ? "text-primary" : "text-destructive"}
+          tone={fin.monthlyProfit >= 0 ? "text-success" : "text-destructive"}
         />
         <Metric label="Úkoly dnes" value={String(todayTasks.length)} hint="dnes & po termínu" />
       </div>

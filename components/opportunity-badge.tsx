@@ -11,9 +11,9 @@ export function OpportunityBadge({
   className?: string;
 }) {
   const tone = opp.gold
-    ? "bg-amber-400"
+    ? "bg-gold"
     : opp.score >= 65
-      ? "bg-primary"
+      ? "bg-success"
       : "bg-muted-foreground/50";
 
   return (
@@ -28,7 +28,7 @@ export function OpportunityBadge({
       {opp.gold && (
         <span
           title="Zlatý lead: prosperující firma se špatným webem"
-          className="font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-500"
+          className="font-mono text-[10px] font-semibold uppercase tracking-wider text-gold"
         >
           ★ zlatý
         </span>

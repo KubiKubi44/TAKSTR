@@ -47,9 +47,9 @@ function categorize(e: CalEvent): Cat {
   return "followup";
 }
 const CAT = {
-  meeting: { label: "Schůzka", chip: "bg-primary/15 text-primary border-primary/30", dot: "bg-primary" },
-  invoice: { label: "Faktura", chip: "bg-amber-500/15 text-amber-300 border-amber-500/30", dot: "bg-amber-400" },
-  followup: { label: "Follow-up", chip: "bg-white/8 text-muted-foreground border-white/20", dot: "bg-muted-foreground" },
+  meeting: { label: "Schůzka", chip: "bg-info/15 text-info border-info/35", dot: "bg-info" },
+  invoice: { label: "Faktura", chip: "bg-gold/15 text-gold border-gold/35", dot: "bg-gold" },
+  followup: { label: "Follow-up", chip: "bg-iris/15 text-iris border-iris/35", dot: "bg-iris" },
 } as const;
 
 function startOfDay(d: Date) {

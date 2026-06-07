@@ -89,6 +89,11 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  /* semantické „jewel tone" akcenty pro data (čísla, stavy, kalendář) */
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-gold: var(--gold);
+  --color-iris: var(--iris);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -126,6 +131,10 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.58 0.15 156);
+  --info: oklch(0.55 0.16 250);
+  --gold: oklch(0.7 0.13 78);
+  --iris: oklch(0.55 0.18 292);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.62 0.12 178);
@@ -162,7 +171,12 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.27 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.62 0.14 25);
+  --destructive: oklch(0.67 0.17 24);
+  /* jewel tone akcenty laděné na lesklou černou */
+  --success: oklch(0.8 0.15 156);
+  --info: oklch(0.74 0.13 240);
+  --gold: oklch(0.84 0.13 82);
+  --iris: oklch(0.72 0.16 292);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.82 0 0);

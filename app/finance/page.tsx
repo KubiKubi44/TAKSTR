@@ -26,14 +26,20 @@ function Stat({
   label: string;
   value: string;
   hint?: string;
-  accent?: "primary" | "destructive";
+  accent?: "success" | "destructive" | "gold";
 }) {
+  const accentClass =
+    accent === "success"
+      ? "text-success"
+      : accent === "destructive"
+        ? "text-destructive"
+        : accent === "gold"
+          ? "text-gold"
+          : "";
   return (
     <Card className="gap-1 p-4">
       <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p
-        className={`font-mono text-2xl tabular-nums ${accent === "primary" ? "text-primary" : accent === "destructive" ? "text-destructive" : ""}`}
-      >
+      <p className={`font-mono text-2xl tabular-nums ${accentClass}`}>
         {value}
       </p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
@@ -42,8 +48,11 @@ function Stat({
 }
 
 export default async function FinancePage() {
-  const [summary, income, schedule, due, expenses] = await Promise.all([
-    getFinanceSummary(),
+  // getFinanceSummary uvnitř fan-outuje (revenue + expenses) — drží spojení,
+  // takže ho pustíme zvlášť, ať s ostatními nepřekročíme pool (max 5) a
+  // nevznikne deadlock spojení.
+  const summary = await getFinanceSummary();
+  const [income, schedule, due, expenses] = await Promise.all([
     getProjectIncomeRows(),
     getInvoiceSchedule(),
     getDueInvoices(),
@@ -64,19 +73,24 @@ export default async function FinancePage() {
 
       {/* souhrn */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="MRR · měsíčně" value={czk(summary.mrr)} accent="primary" />
+        <Stat label="MRR · měsíčně" value={czk(summary.mrr)} accent="success" />
         <Stat label="Náklady · měsíčně" value={czk(summary.recurringCost)} accent="destructive" />
         <Stat
           label="Čistý zisk · měsíčně"
           value={czk(summary.monthlyProfit)}
-          accent={summary.monthlyProfit >= 0 ? "primary" : "destructive"}
+          accent={summary.monthlyProfit >= 0 ? "success" : "destructive"}
         />
-        <Stat label="Čistý zisk · ročně" value={czk(summary.annualProfit)} hint={`ARR ${czk(summary.arr)}`} />
+        <Stat
+          label="Čistý zisk · ročně"
+          value={czk(summary.annualProfit)}
+          hint={`ARR ${czk(summary.arr)}`}
+          accent={summary.annualProfit >= 0 ? "success" : "destructive"}
+        />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Výroba celkem" value={czk(summary.buildTotal)} hint="jednorázové příjmy" />
-        <Stat label="Jednorázové náklady" value={czk(summary.oneTimeCost)} />
-        <Stat label="Tento měsíc k fakturaci" value={czk(schedule.thisMonthSum)} />
+        <Stat label="Výroba celkem" value={czk(summary.buildTotal)} hint="jednorázové příjmy" accent="success" />
+        <Stat label="Jednorázové náklady" value={czk(summary.oneTimeCost)} accent="destructive" />
+        <Stat label="Tento měsíc k fakturaci" value={czk(schedule.thisMonthSum)} accent="gold" />
         <Stat label="Po termínu" value={String(due.length)} accent={due.length ? "destructive" : undefined} hint="projektů k fakturaci" />
       </div>
 
@@ -108,7 +122,7 @@ export default async function FinancePage() {
                   <li key={u.routeId} className="flex items-center gap-3 py-2 text-sm">
                     <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">{date(u.date)}</span>
                     <Link href={`/projekty/${u.routeId}`} className="flex-1 truncate hover:text-primary">{u.name}</Link>
-                    <span className="font-mono text-xs tabular-nums text-primary">{u.amount ? czk(u.amount) : ""}</span>
+                    <span className="font-mono text-xs tabular-nums text-gold">{u.amount ? czk(u.amount) : ""}</span>
                   </li>
                 ))}
               </ul>
@@ -168,7 +182,7 @@ export default async function FinancePage() {
                       <Link href={`/projekty/${r.routeId}`} className="hover:text-primary">{r.name}</Link>
                     </td>
                     <td className="py-2 pr-4 text-right font-mono tabular-nums text-muted-foreground">{r.build ? czk(r.build) : "—"}</td>
-                    <td className="py-2 pr-4 text-right font-mono tabular-nums text-primary">{r.monthly ? czk(r.monthly) : "—"}</td>
+                    <td className="py-2 pr-4 text-right font-mono tabular-nums text-success">{r.monthly ? czk(r.monthly) : "—"}</td>
                     <td className="py-2 pr-4 text-right font-mono tabular-nums">{r.annual ? czk(r.annual) : "—"}</td>
                     <td className="py-2 text-right font-mono tabular-nums text-muted-foreground">{Math.round(r.share * 100)} %</td>
                   </tr>

@@ -33,9 +33,9 @@ export const LEAD_STATUS_CLASS: Record<LeadStatus, string> = {
   scored: "text-foreground border-border",
   analyzed: "text-foreground border-border",
   drafted: "text-foreground border-border",
-  sent: "text-foreground border-foreground/30",
-  replied: "text-primary border-primary/40",
-  meeting: "text-primary border-primary/50",
-  won: "text-primary border-primary/60 font-medium",
+  sent: "text-info border-info/40",
+  replied: "text-info border-info/55",
+  meeting: "text-gold border-gold/55",
+  won: "text-success border-success/60 font-medium",
   dead: "text-muted-foreground/50 border-border/50 line-through",
 };

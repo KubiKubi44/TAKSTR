@@ -13,11 +13,21 @@ import {
 import { LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from "@/lib/leadStatus";
 import { computeOpportunity } from "@/lib/opportunity";
 
-function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Metric({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: string;
+}) {
   return (
     <Card className="gap-1 p-5">
       <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="font-mono text-3xl tabular-nums">{value}</p>
+      <p className={`font-mono text-3xl tabular-nums ${tone ?? ""}`}>{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </Card>
   );
@@ -59,10 +69,11 @@ export default async function ObchodPage() {
           label="Response rate"
           value={m.sent > 0 ? `${Math.round(m.responseRate * 100)} %` : "—"}
           hint={`${m.replies} odpovědí / ${m.sent} odesláno`}
+          tone="text-info"
         />
         <Metric label="Odesláno" value={String(m.sent)} hint="celkem outbound" />
-        <Metric label="Schůzky" value={String(m.meetings)} />
-        <Metric label="Zakázky" value={String(m.won)} />
+        <Metric label="Schůzky" value={String(m.meetings)} tone="text-info" />
+        <Metric label="Zakázky" value={String(m.won)} tone="text-success" />
       </div>
 
       <Card className="mt-6 gap-3 p-5">
@@ -83,7 +94,7 @@ export default async function ObchodPage() {
             {demand.slice(0, 6).map((d) => (
               <li key={d.id} className="flex items-center gap-3 py-2 text-sm">
                 {d.status === "new" && (
-                  <span className="size-2 shrink-0 rounded-full bg-foreground" title="nová" />
+                  <span className="size-2 shrink-0 rounded-full bg-info" title="nová" />
                 )}
                 <a
                   href={d.url}
