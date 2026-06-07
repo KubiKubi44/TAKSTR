@@ -83,7 +83,7 @@ export default async function ObchodPage() {
             {demand.slice(0, 6).map((d) => (
               <li key={d.id} className="flex items-center gap-3 py-2 text-sm">
                 {d.status === "new" && (
-                  <span className="size-2 shrink-0 rounded-full bg-amber-400" title="nová" />
+                  <span className="size-2 shrink-0 rounded-full bg-foreground" title="nová" />
                 )}
                 <a
                   href={d.url}

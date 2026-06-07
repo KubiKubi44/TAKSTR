@@ -138,7 +138,7 @@ export function DemandList({ items }: { items: DemandRow[] }) {
               className="glass-hover flex flex-row flex-wrap items-center gap-3 p-4"
             >
               {it.status === "new" && (
-                <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" title="nová" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-foreground" title="nová" />
               )}
               <div className="min-w-0 flex-1">
                 <a

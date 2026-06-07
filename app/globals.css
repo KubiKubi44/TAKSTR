@@ -12,19 +12,19 @@
 @utility glass {
   background-image:
     /* specular highlight (lesk skla) v levém horním rohu */
-    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.16), transparent 46%),
-    /* horní sheen */
-    linear-gradient(to bottom, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0) 34%),
+    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.22), transparent 46%),
+    /* horní sheen — lesklý pruh */
+    linear-gradient(to bottom, oklch(1 0 0 / 0.14), oklch(1 0 0 / 0) 32%),
     /* průsvitné tělo */
     linear-gradient(180deg,
       color-mix(in oklch, var(--card) 42%, transparent),
       color-mix(in oklch, var(--card) 60%, transparent));
-  -webkit-backdrop-filter: blur(28px) saturate(185%) brightness(1.06);
-  backdrop-filter: blur(28px) saturate(185%) brightness(1.06);
+  -webkit-backdrop-filter: blur(28px) saturate(140%) brightness(1.08);
+  backdrop-filter: blur(28px) saturate(140%) brightness(1.08);
   border: 1px solid oklch(1 0 0 / 0.1);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.22), /* světelná horní hrana */
-    inset 0 0 0 1px oklch(1 0 0 / 0.04), /* jemný vnitřní lem */
+    inset 0 1px 0 0 oklch(1 0 0 / 0.34), /* lesklá horní hrana */
+    inset 0 0 0 1px oklch(1 0 0 / 0.05), /* jemný vnitřní lem */
     inset 0 -34px 50px -42px oklch(0 0 0 / 0.45), /* hloubka u dna */
     0 20px 50px -24px oklch(0 0 0 / 0.5); /* plovoucí stín */
   transition:
@@ -146,26 +146,26 @@
 }
 
 .dark {
-  /* Emerald — slate s lehkým zeleným nádechem + teal/smaragdový akcent */
-  --background: oklch(0.15 0.018 195);
-  --foreground: oklch(0.985 0.005 180);
-  --card: oklch(0.23 0.02 190);
-  --card-foreground: oklch(0.985 0.005 180);
-  --popover: oklch(0.22 0.022 190);
-  --popover-foreground: oklch(0.985 0.005 180);
-  /* teal / smaragdový akcent pro primární akce */
-  --primary: oklch(0.76 0.13 175);
-  --primary-foreground: oklch(0.2 0.035 185);
-  --secondary: oklch(0.27 0.013 195);
-  --secondary-foreground: oklch(0.985 0.005 180);
-  --muted: oklch(0.27 0.013 195);
-  --muted-foreground: oklch(0.72 0.022 188);
-  --accent: oklch(0.27 0.013 195);
-  --accent-foreground: oklch(0.985 0.005 180);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.95 0.02 190 / 10%);
-  --input: oklch(0.95 0.02 190 / 14%);
-  --ring: oklch(0.76 0.13 175);
+  /* Premium Monochrome — čistě neutrální černobílá, akcent = near-white */
+  --background: oklch(0.135 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.2 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  /* near-white akcent — prémiová bílá tlačítka s tmavým textem */
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.17 0 0);
+  --secondary: oklch(0.26 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.26 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.27 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.62 0.14 25);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.82 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -201,10 +201,12 @@
     z-index: -2;
     background-color: var(--background);
     background-image:
-      radial-gradient(58rem 58rem at 6% -10%, oklch(0.74 0.15 178 / 0.2), transparent 60%),
-      radial-gradient(50rem 50rem at 104% 2%, oklch(0.72 0.13 205 / 0.16), transparent 56%),
-      radial-gradient(48rem 42rem at 90% 112%, oklch(0.82 0.17 142 / 0.13), transparent 60%),
-      radial-gradient(40rem 40rem at 44% 48%, oklch(0.55 0.1 190 / 0.07), transparent 72%);
+      /* stříbřité světlo (bez barvy) — sklo má co odrážet */
+      radial-gradient(60rem 60rem at 8% -12%, oklch(0.99 0 0 / 0.08), transparent 58%),
+      radial-gradient(48rem 48rem at 102% 0%, oklch(0.92 0 0 / 0.05), transparent 55%),
+      radial-gradient(44rem 40rem at 92% 114%, oklch(0.88 0 0 / 0.04), transparent 60%),
+      /* prémiová vinětace — ztmavení k okrajům pro hloubku */
+      radial-gradient(130% 120% at 50% -8%, transparent 54%, oklch(0 0 0 / 0.5));
   }
   /* Jemné zrno pro „frosted" realismus skla. */
   body::after {
@@ -218,8 +220,8 @@
     background-size: 140px 140px;
   }
   ::selection {
-    background: oklch(0.76 0.13 175 / 0.32);
-    color: oklch(0.99 0 0);
+    background: oklch(0.95 0 0 / 0.88);
+    color: oklch(0.15 0 0);
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;

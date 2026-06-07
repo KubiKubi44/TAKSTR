@@ -49,7 +49,7 @@ function categorize(e: CalEvent): Cat {
 const CAT = {
   meeting: { label: "Schůzka", chip: "bg-primary/15 text-primary border-primary/30", dot: "bg-primary" },
   invoice: { label: "Faktura", chip: "bg-amber-500/15 text-amber-300 border-amber-500/30", dot: "bg-amber-400" },
-  followup: { label: "Follow-up", chip: "bg-violet-500/15 text-violet-300 border-violet-500/30", dot: "bg-violet-400" },
+  followup: { label: "Follow-up", chip: "bg-white/8 text-muted-foreground border-white/20", dot: "bg-muted-foreground" },
 } as const;
 
 function startOfDay(d: Date) {

@@ -261,7 +261,7 @@ export default async function LeadDetailPage({
               <p className="text-xs text-muted-foreground">{opp.reasons.join(" · ")}</p>
             )}
             {!opp.moneyKnown && (
-              <p className="text-[11px] text-amber-500/90">
+              <p className="text-[11px] text-muted-foreground">
                 Klikni „Obohatit“ — bez bonity (ARES + hodnocení) je skóre jen odhad.
               </p>
             )}
