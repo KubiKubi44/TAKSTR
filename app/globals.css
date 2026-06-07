@@ -117,8 +117,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.7 0.13 235);
-  --primary-foreground: oklch(0.98 0.01 240);
+  --primary: oklch(0.62 0.12 178);
+  --primary-foreground: oklch(0.99 0.02 185);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -128,7 +128,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.7 0.13 235);
+  --ring: oklch(0.62 0.12 178);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -146,25 +146,26 @@
 }
 
 .dark {
-  --background: oklch(0.13 0.006 265);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.22 0.006 265);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  /* světle modrý akcent pro primární akce */
-  --primary: oklch(0.78 0.12 235);
-  --primary-foreground: oklch(0.2 0.04 240);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Emerald — slate s lehkým zeleným nádechem + teal/smaragdový akcent */
+  --background: oklch(0.15 0.018 195);
+  --foreground: oklch(0.985 0.005 180);
+  --card: oklch(0.23 0.02 190);
+  --card-foreground: oklch(0.985 0.005 180);
+  --popover: oklch(0.22 0.022 190);
+  --popover-foreground: oklch(0.985 0.005 180);
+  /* teal / smaragdový akcent pro primární akce */
+  --primary: oklch(0.76 0.13 175);
+  --primary-foreground: oklch(0.2 0.035 185);
+  --secondary: oklch(0.27 0.013 195);
+  --secondary-foreground: oklch(0.985 0.005 180);
+  --muted: oklch(0.27 0.013 195);
+  --muted-foreground: oklch(0.72 0.022 188);
+  --accent: oklch(0.27 0.013 195);
+  --accent-foreground: oklch(0.985 0.005 180);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.78 0.12 235);
+  --border: oklch(0.95 0.02 190 / 10%);
+  --input: oklch(0.95 0.02 190 / 14%);
+  --ring: oklch(0.76 0.13 175);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -200,10 +201,10 @@
     z-index: -2;
     background-color: var(--background);
     background-image:
-      radial-gradient(58rem 58rem at 6% -10%, oklch(0.72 0.16 235 / 0.22), transparent 60%),
-      radial-gradient(50rem 50rem at 104% 2%, oklch(0.6 0.18 300 / 0.17), transparent 56%),
-      radial-gradient(48rem 42rem at 90% 112%, oklch(0.66 0.15 200 / 0.15), transparent 60%),
-      radial-gradient(40rem 40rem at 44% 48%, oklch(0.5 0.13 265 / 0.08), transparent 72%);
+      radial-gradient(58rem 58rem at 6% -10%, oklch(0.74 0.15 178 / 0.2), transparent 60%),
+      radial-gradient(50rem 50rem at 104% 2%, oklch(0.72 0.13 205 / 0.16), transparent 56%),
+      radial-gradient(48rem 42rem at 90% 112%, oklch(0.82 0.17 142 / 0.13), transparent 60%),
+      radial-gradient(40rem 40rem at 44% 48%, oklch(0.55 0.1 190 / 0.07), transparent 72%);
   }
   /* Jemné zrno pro „frosted" realismus skla. */
   body::after {
@@ -217,7 +218,7 @@
     background-size: 140px 140px;
   }
   ::selection {
-    background: oklch(0.78 0.12 235 / 0.32);
+    background: oklch(0.76 0.13 175 / 0.32);
     color: oklch(0.99 0 0);
   }
   h1, h2, h3, h4, h5, h6 {
