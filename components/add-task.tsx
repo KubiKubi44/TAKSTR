@@ -58,6 +58,16 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
     }
   }
 
+  const priorityItems = Object.fromEntries(PRIORITIES.map((p) => [p, PRIORITY_LABEL[p]]));
+  const assigneeItems = {
+    [NONE]: "Pro koho",
+    ...Object.fromEntries(ASSIGNEES.map((a) => [a, ASSIGNEE_LABEL[a]])),
+  };
+  const projectItems = {
+    [NONE]: "Bez projektu",
+    ...Object.fromEntries(projects.map((p) => [p.id, p.name])),
+  };
+
   return (
     <form onSubmit={add} className="flex flex-wrap items-center gap-2">
       <Input
@@ -66,7 +76,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
         placeholder="Nový úkol…"
         className="min-w-48 flex-1"
       />
-      <Select value={priority} onValueChange={(v) => setPriority(v ?? "normal")}>
+      <Select items={priorityItems} value={priority} onValueChange={(v) => setPriority(v ?? "normal")}>
         <SelectTrigger className="w-28">
           <SelectValue />
         </SelectTrigger>
@@ -78,9 +88,9 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
           ))}
         </SelectContent>
       </Select>
-      <Select value={assignee} onValueChange={(v) => setAssignee(v ?? NONE)}>
+      <Select items={assigneeItems} value={assignee} onValueChange={(v) => setAssignee(v ?? NONE)}>
         <SelectTrigger className="w-32">
-          <SelectValue placeholder="Pro koho" />
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>Pro koho</SelectItem>
@@ -92,9 +102,9 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
         </SelectContent>
       </Select>
       {projects.length > 0 && (
-        <Select value={projectId} onValueChange={(v) => setProjectId(v ?? NONE)}>
+        <Select items={projectItems} value={projectId} onValueChange={(v) => setProjectId(v ?? NONE)}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Projekt" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="max-h-60">
             <SelectItem value={NONE}>Bez projektu</SelectItem>

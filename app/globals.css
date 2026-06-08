@@ -133,20 +133,21 @@
   --input: oklch(0.9 0 0);
   --ring: oklch(0.2 0 0);
   /* světlé sklo — průsvitně bílý panel, tmavý lem, měkký stín */
-  --glass-spec: oklch(1 0 0 / 0.6);
-  --glass-sheen: oklch(1 0 0 / 0.45);
+  /* matnější (méně lesku) + tmavší černé lemy */
+  --glass-spec: oklch(1 0 0 / 0.12);
+  --glass-sheen: oklch(1 0 0 / 0.08);
   --glass-bright: 1;
-  --glass-border: oklch(0 0 0 / 0.26);
-  --glass-edge: oklch(1 0 0 / 0.7);
-  --glass-inner: oklch(0 0 0 / 0.04);
-  --glass-depth: oklch(0 0 0 / 0.05);
-  --glass-cast: oklch(0.35 0 0 / 0.22);
-  --glass-fill-top: color-mix(in oklch, var(--card) 72%, transparent);
-  --glass-fill-bottom: color-mix(in oklch, var(--card) 88%, transparent);
-  --glassS-fill-top: color-mix(in oklch, var(--popover) 80%, transparent);
-  --glassS-fill-bottom: color-mix(in oklch, var(--popover) 92%, transparent);
-  --glass-hover-border: oklch(0 0 0 / 0.42);
-  --glass-hover-edge: oklch(1 0 0 / 0.85);
+  --glass-border: oklch(0 0 0 / 0.36);
+  --glass-edge: oklch(1 0 0 / 0.25);
+  --glass-inner: oklch(0 0 0 / 0.05);
+  --glass-depth: oklch(0 0 0 / 0.04);
+  --glass-cast: oklch(0.4 0 0 / 0.16);
+  --glass-fill-top: color-mix(in oklch, var(--card) 92%, transparent);
+  --glass-fill-bottom: color-mix(in oklch, var(--card) 99%, transparent);
+  --glassS-fill-top: color-mix(in oklch, var(--popover) 94%, transparent);
+  --glassS-fill-bottom: color-mix(in oklch, var(--popover) 99%, transparent);
+  --glass-hover-border: oklch(0 0 0 / 0.5);
+  --glass-hover-edge: oklch(1 0 0 / 0.3);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

@@ -3,7 +3,7 @@ import { db } from "@/db/client";
 import { task } from "@/db/schema";
 
 const PRIORITIES = ["low", "normal", "high"];
-const ASSIGNEES = ["tomis", "kubis", "osobni"];
+const ASSIGNEES = ["tomis", "kubis", "oba"];
 
 // POST /api/tasks/:id — úprava úkolu (jen poslaná pole).
 // Tělo: { title?, dueAt?, priority?, projectId?, leadId?, note?, assignee? }

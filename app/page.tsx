@@ -8,7 +8,7 @@ import {
   getTasksGrouped,
   getUpcomingEvents,
 } from "@/db/queries";
-import { PRIORITY_DOT } from "@/lib/taskMeta";
+import { ASSIGNEE_CHIP, ASSIGNEE_LABEL, PRIORITY_BAR } from "@/lib/taskMeta";
 
 const czk = (n: number) => `${n.toLocaleString("cs-CZ")} Kč`;
 
@@ -102,8 +102,15 @@ export default async function ProvozPage() {
           <ul className="divide-y divide-white/8">
             {todayTasks.map((t) => (
               <li key={t.id} className="flex items-center gap-3 py-2 text-sm">
-                <span className={`size-2 shrink-0 rounded-full ${PRIORITY_DOT[t.priority]}`} />
+                <span className={`size-2 shrink-0 rounded-full ${PRIORITY_BAR[t.priority]}`} />
                 <span className="flex-1 truncate">{t.title}</span>
+                {t.assignee && (
+                  <span
+                    className={`shrink-0 border px-1 py-0.5 font-mono text-[10px] uppercase tracking-wider ${ASSIGNEE_CHIP[t.assignee] ?? "border-border text-muted-foreground"}`}
+                  >
+                    {ASSIGNEE_LABEL[t.assignee] ?? t.assignee}
+                  </span>
+                )}
                 {t.project && (
                   <Link
                     href={`/projekty/${t.project.vercelProjectId ?? t.project.id}`}
@@ -136,8 +143,15 @@ export default async function ProvozPage() {
           <ul className="divide-y divide-white/8">
             {weekTasks.map((t) => (
               <li key={t.id} className="flex items-center gap-3 py-2 text-sm">
-                <span className={`size-2 shrink-0 rounded-full ${PRIORITY_DOT[t.priority]}`} />
+                <span className={`size-2 shrink-0 rounded-full ${PRIORITY_BAR[t.priority]}`} />
                 <span className="flex-1 truncate">{t.title}</span>
+                {t.assignee && (
+                  <span
+                    className={`shrink-0 border px-1 py-0.5 font-mono text-[10px] uppercase tracking-wider ${ASSIGNEE_CHIP[t.assignee] ?? "border-border text-muted-foreground"}`}
+                  >
+                    {ASSIGNEE_LABEL[t.assignee] ?? t.assignee}
+                  </span>
+                )}
                 {t.project && (
                   <Link
                     href={`/projekty/${t.project.vercelProjectId ?? t.project.id}`}
@@ -181,8 +195,8 @@ export default async function ProvozPage() {
                 <span
                   className={
                     e.kind === "meeting"
-                      ? "font-mono text-[10px] uppercase tracking-wider text-primary"
-                      : "font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                      ? "font-mono text-[10px] uppercase tracking-wider text-info"
+                      : "font-mono text-[10px] uppercase tracking-wider text-iris"
                   }
                 >
                   {e.kind === "meeting" ? "schůzka" : "follow-up"}

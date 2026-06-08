@@ -2,7 +2,7 @@ import { db } from "@/db/client";
 import { task, type TaskPriority } from "@/db/schema";
 
 const PRIORITIES = ["low", "normal", "high"];
-const ASSIGNEES = ["tomis", "kubis", "osobni"];
+const ASSIGNEES = ["tomis", "kubis", "oba"];
 
 // POST /api/tasks — přidá úkol.
 // Tělo: { title, dueAt?, note?, priority?, projectId?, leadId?, assignee? }

@@ -233,7 +233,11 @@ export function DemandList({ items }: { items: DemandRow[] }) {
           )}
         </span>
         <div className="ml-auto flex items-center gap-2">
-          <Select value={statusF} onValueChange={(v) => setStatusF(v ?? "all")}>
+          <Select
+            items={{ all: "Vše", new: "Jen nové", done: "Probrané" }}
+            value={statusF}
+            onValueChange={(v) => setStatusF(v ?? "all")}
+          >
             <SelectTrigger size="sm" className="w-36">
               <SelectValue placeholder="Stav" />
             </SelectTrigger>
@@ -243,7 +247,11 @@ export function DemandList({ items }: { items: DemandRow[] }) {
               <SelectItem value="done">Probrané</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={range} onValueChange={(v) => setRange(v ?? "all")}>
+          <Select
+            items={{ all: "Všechna data", "1": "Dnes", "7": "7 dní", "30": "30 dní" }}
+            value={range}
+            onValueChange={(v) => setRange(v ?? "all")}
+          >
             <SelectTrigger size="sm" className="w-36">
               <SelectValue placeholder="Období" />
             </SelectTrigger>

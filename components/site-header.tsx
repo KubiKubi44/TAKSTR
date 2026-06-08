@@ -50,32 +50,40 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
   const divider = <span className="mx-1 h-5 w-px shrink-0 bg-border" />;
 
   return (
-    // plovoucí dock — centrovaný skleněný pill kousek od horního okraje
-    <header className="pointer-events-none sticky top-0 z-30 flex justify-center px-4 pt-3">
-      <nav className="glass-strong pointer-events-auto flex items-center gap-0.5 rounded-full p-1 text-[13px]">
-        {LEFT_NAV.map(renderLink)}
-        {divider}
-        <Link
-          href="/"
-          aria-label="TAK — domů"
-          className="select-none bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text px-2.5 font-heading text-[15px] font-bold tracking-[0.22em] text-transparent"
-        >
-          TAK
-        </Link>
-        {divider}
-        {RIGHT_NAV.map(renderLink)}
-        {divider}
+    <>
+      {/* plovoucí dock — centrovaná navigace kousek od horního okraje */}
+      <header className="pointer-events-none sticky top-0 z-30 flex justify-center px-4 pt-3">
+        <nav className="glass-strong pointer-events-auto flex items-center gap-0.5 rounded-full p-1 text-[13px]">
+          {LEFT_NAV.map(renderLink)}
+          {divider}
+          <Link
+            href="/"
+            aria-label="TAK — domů"
+            className="select-none bg-linear-to-b from-foreground to-muted-foreground bg-clip-text px-2.5 font-heading text-[15px] font-bold tracking-[0.22em] text-transparent"
+          >
+            TAK
+          </Link>
+          {divider}
+          {RIGHT_NAV.map(renderLink)}
+        </nav>
+      </header>
+
+      {/* ovládání úplně vpravo — přepínač režimu + odhlášení (oddělené) */}
+      <div className="fixed top-3 right-4 z-40 flex items-center gap-0.5 rounded-full glass-strong p-1 text-[13px]">
         <ThemeToggle />
         {authEnabled && (
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
-          >
-            Odhlásit
-          </button>
+          <>
+            <span className="mx-0.5 h-5 w-px shrink-0 bg-border" />
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
+            >
+              Odhlásit
+            </button>
+          </>
         )}
-      </nav>
-    </header>
+      </div>
+    </>
   );
 }

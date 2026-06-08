@@ -115,7 +115,11 @@ export function NewEventDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Typ</Label>
-              <Select value={kind} onValueChange={(v) => setKind(v ?? "meeting")}>
+              <Select
+                items={{ meeting: "Schůzka", followup: "Follow-up" }}
+                value={kind}
+                onValueChange={(v) => setKind(v ?? "meeting")}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -128,7 +132,11 @@ export function NewEventDialog({
             {!presetLeadId && leads && (
               <div className="grid gap-1.5">
                 <Label>Lead</Label>
-                <Select value={leadId} onValueChange={(v) => setLeadId(v ?? NONE)}>
+                <Select
+                  items={{ [NONE]: "Bez leadu", ...Object.fromEntries(leads.map((l) => [l.id, l.businessName])) }}
+                  value={leadId}
+                  onValueChange={(v) => setLeadId(v ?? NONE)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Bez leadu" />
                   </SelectTrigger>

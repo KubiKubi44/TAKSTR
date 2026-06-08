@@ -158,7 +158,14 @@ export function LeadsWorkspace({
 
         {view === "table" && (
           <>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+            <Select
+              items={{
+                all: "Všechny stavy",
+                ...Object.fromEntries(LEAD_STATUS_ORDER.map((s) => [s, LEAD_STATUS_LABEL[s]])),
+              }}
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v ?? "all")}
+            >
               <SelectTrigger size="sm" className="w-44">
                 <SelectValue placeholder="Stav" />
               </SelectTrigger>
@@ -171,7 +178,11 @@ export function LeadsWorkspace({
                 ))}
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v ?? "opp")}>
+            <Select
+              items={{ opp: "Podle příležitosti", score: "Podle skóre webu" }}
+              value={sortBy}
+              onValueChange={(v) => setSortBy(v ?? "opp")}
+            >
               <SelectTrigger size="sm" className="w-44">
                 <SelectValue placeholder="Řadit" />
               </SelectTrigger>

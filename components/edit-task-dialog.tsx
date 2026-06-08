@@ -105,7 +105,11 @@ export function EditTaskDialog({
             </div>
             <div className="grid gap-1.5">
               <Label>Priorita</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v ?? "normal")}>
+              <Select
+                items={Object.fromEntries(PRIORITIES.map((p) => [p, PRIORITY_LABEL[p]]))}
+                value={priority}
+                onValueChange={(v) => setPriority(v ?? "normal")}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -121,9 +125,13 @@ export function EditTaskDialog({
           </div>
           <div className="grid gap-1.5">
             <Label>Pro koho</Label>
-            <Select value={assignee} onValueChange={(v) => setAssignee(v ?? NONE)}>
+            <Select
+              items={{ [NONE]: "Nepřiřazeno", ...Object.fromEntries(ASSIGNEES.map((a) => [a, ASSIGNEE_LABEL[a]])) }}
+              value={assignee}
+              onValueChange={(v) => setAssignee(v ?? NONE)}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Nepřiřazeno" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NONE}>Nepřiřazeno</SelectItem>

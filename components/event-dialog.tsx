@@ -129,7 +129,11 @@ function EventForm({
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label>Typ</Label>
-            <Select value={kind} onValueChange={(v) => setKind(v ?? "meeting")}>
+            <Select
+              items={{ meeting: "Schůzka", followup: "Follow-up" }}
+              value={kind}
+              onValueChange={(v) => setKind(v ?? "meeting")}
+            >
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="meeting">Schůzka</SelectItem>
@@ -140,7 +144,11 @@ function EventForm({
           {leads.length > 0 && (
             <div className="grid gap-1.5">
               <Label>Lead</Label>
-              <Select value={leadId} onValueChange={(v) => setLeadId(v ?? NONE)}>
+              <Select
+                items={{ [NONE]: "Bez leadu", ...Object.fromEntries(leads.map((l) => [l.id, l.businessName])) }}
+                value={leadId}
+                onValueChange={(v) => setLeadId(v ?? NONE)}
+              >
                 <SelectTrigger className="w-full"><SelectValue placeholder="Bez leadu" /></SelectTrigger>
                 <SelectContent className="max-h-60">
                   <SelectItem value={NONE}>Bez leadu</SelectItem>
