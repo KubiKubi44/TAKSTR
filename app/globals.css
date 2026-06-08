@@ -177,7 +177,7 @@
   --secondary: oklch(0.26 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.26 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.78 0 0);
   --accent: oklch(0.27 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.67 0.17 24);
@@ -193,8 +193,9 @@
   --glass-spec: oklch(1 0 0 / 0.07);
   --glass-sheen: oklch(1 0 0 / 0.05);
   --glass-bright: 1.03;
-  --glass-border: oklch(1 0 0 / 0.14);
-  --glass-edge: oklch(1 0 0 / 0.18);
+  /* stříbrný (metalický) lem — světle šedý, viditelný proti černé */
+  --glass-border: oklch(0.82 0 0 / 0.42);
+  --glass-edge: oklch(1 0 0 / 0.26);
   --glass-inner: oklch(1 0 0 / 0.04);
   --glass-depth: oklch(0 0 0 / 0.4);
   --glass-cast: oklch(0 0 0 / 0.66);
@@ -202,8 +203,8 @@
   --glass-fill-bottom: color-mix(in oklch, var(--card) 84%, transparent);
   --glassS-fill-top: color-mix(in oklch, var(--popover) 72%, transparent);
   --glassS-fill-bottom: color-mix(in oklch, var(--popover) 84%, transparent);
-  --glass-hover-border: oklch(1 0 0 / 0.22);
-  --glass-hover-edge: oklch(1 0 0 / 0.22);
+  --glass-hover-border: oklch(0.88 0 0 / 0.6);
+  --glass-hover-edge: oklch(1 0 0 / 0.3);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
