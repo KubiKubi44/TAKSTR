@@ -36,33 +36,38 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
       key={item.href}
       href={item.href}
       className={cn(
-        "rounded-full px-3 py-1.5 transition-colors",
+        "rounded-full px-3 py-1.5 whitespace-nowrap transition-colors",
         isActive(item.href)
-          ? "bg-white/10 text-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.16)]"
-          : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+          ? "bg-white/10 text-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.18)]"
+          : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
       )}
     >
       {item.label}
     </Link>
   );
 
+  const divider = <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />;
+
   return (
-    <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-background/55 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.06)] backdrop-blur-2xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 text-sm">
-        <nav className="flex items-center gap-1">{LEFT_NAV.map(renderLink)}</nav>
-        <nav className="flex items-center gap-1">
-          {RIGHT_NAV.map(renderLink)}
-          {authEnabled && (
+    // plovoucí dock — centrovaný skleněný pill kousek od horního okraje
+    <header className="pointer-events-none sticky top-0 z-30 flex justify-center px-4 pt-3">
+      <nav className="glass-strong pointer-events-auto flex items-center gap-0.5 rounded-full p-1 text-[13px]">
+        {LEFT_NAV.map(renderLink)}
+        {divider}
+        {RIGHT_NAV.map(renderLink)}
+        {authEnabled && (
+          <>
+            {divider}
             <button
               type="button"
               onClick={logout}
-              className="ml-1 rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+              className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-white/6 hover:text-foreground"
             >
               Odhlásit
             </button>
-          )}
-        </nav>
-      </div>
+          </>
+        )}
+      </nav>
     </header>
   );
 }
