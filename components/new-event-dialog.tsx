@@ -23,21 +23,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-
-interface LeadOption {
-  id: string;
-  businessName: string;
-}
+import { ColorPicker } from "@/components/ui/color-picker";
+import { EVENT_KINDS, EVENT_KIND_LABEL } from "@/lib/eventMeta";
 
 const NONE = "none";
 
 export function NewEventDialog({
-  leads,
   presetLeadId,
   presetLeadName,
   trigger,
 }: {
-  leads?: LeadOption[];
   presetLeadId?: string;
   presetLeadName?: string;
   trigger?: ReactNode;
@@ -46,7 +41,8 @@ export function NewEventDialog({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [kind, setKind] = useState("meeting");
-  const [leadId, setLeadId] = useState(presetLeadId ?? NONE);
+  const [color, setColor] = useState("");
+  const [leadId] = useState(presetLeadId ?? NONE);
   const [form, setForm] = useState({
     title: "",
     startAt: "",
@@ -73,6 +69,7 @@ export function NewEventDialog({
         body: JSON.stringify({
           title: form.title.trim(),
           kind,
+          color: color || undefined,
           startAt: new Date(form.startAt).toISOString(),
           endAt: form.endAt ? new Date(form.endAt).toISOString() : undefined,
           location: form.location.trim() || undefined,
@@ -88,6 +85,7 @@ export function NewEventDialog({
       toast.success("Událost přidána");
       setOpen(false);
       setForm({ title: "", startAt: "", endAt: "", location: "", note: "" });
+      setColor("");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
@@ -116,7 +114,7 @@ export function NewEventDialog({
             <div className="grid gap-1.5">
               <Label>Typ</Label>
               <Select
-                items={{ meeting: "Schůzka", followup: "Follow-up" }}
+                items={EVENT_KIND_LABEL}
                 value={kind}
                 onValueChange={(v) => setKind(v ?? "meeting")}
               >
@@ -124,33 +122,20 @@ export function NewEventDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="meeting">Schůzka</SelectItem>
-                  <SelectItem value="followup">Follow-up</SelectItem>
+                  {EVENT_KINDS.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {EVENT_KIND_LABEL[k]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            {!presetLeadId && leads && (
-              <div className="grid gap-1.5">
-                <Label>Lead</Label>
-                <Select
-                  items={{ [NONE]: "Bez leadu", ...Object.fromEntries(leads.map((l) => [l.id, l.businessName])) }}
-                  value={leadId}
-                  onValueChange={(v) => setLeadId(v ?? NONE)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Bez leadu" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    <SelectItem value={NONE}>Bez leadu</SelectItem>
-                    {leads.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.businessName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="grid gap-1.5">
+              <Label>Barva</Label>
+              <div className="flex h-8 items-center">
+                <ColorPicker value={color} onChange={setColor} />
               </div>
-            )}
+            </div>
           </div>
 
           <div className="grid gap-1.5">
@@ -159,7 +144,7 @@ export function NewEventDialog({
               id="ev-title"
               value={form.title}
               onChange={set("title")}
-              placeholder={kind === "meeting" ? "Schůzka — …" : "Ozvat se …"}
+              placeholder={kind === "meeting" ? "Schůzka — …" : "Název události…"}
             />
           </div>
 

@@ -64,7 +64,7 @@ export async function POST(
       await db.insert(calendarEvent).values({
         userId: user.id,
         projectId: metaId,
-        kind: "followup",
+        kind: "invoice",
         title: `Fakturovat — ${body?.projectName ?? "projekt"}`,
         startAt: next,
         allDay: true,

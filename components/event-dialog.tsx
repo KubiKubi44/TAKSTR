@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { EVENT_KINDS, EVENT_KIND_LABEL } from "@/lib/eventMeta";
 
 const NONE = "none";
 
 export interface EditableEvent {
   id: string;
-  kind: "meeting" | "followup";
+  kind: string;
+  color: string | null;
   title: string;
   startAt: string | Date;
   endAt: string | Date | null;
@@ -63,6 +66,7 @@ function EventForm({
   const [end, setEnd] = useState(event?.endAt ? toLocalInput(new Date(event.endAt)) : "");
   const [location, setLocation] = useState(event?.location ?? "");
   const [note, setNote] = useState(event?.note ?? "");
+  const [color, setColor] = useState(event?.color ?? "");
   const [leadId, setLeadId] = useState(event?.leadId ?? NONE);
 
   async function save() {
@@ -75,6 +79,7 @@ function EventForm({
       const payload = {
         title: title.trim(),
         kind,
+        color: color || null,
         startAt: new Date(start).toISOString(),
         endAt: end ? new Date(end).toISOString() : null,
         location: location.trim() || null,
@@ -126,44 +131,50 @@ function EventForm({
       </DialogHeader>
 
       <div className="grid gap-4 py-2">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-1.5">
+          <Label>Typ</Label>
+          <Select
+            items={EVENT_KIND_LABEL}
+            value={kind}
+            onValueChange={(v) => setKind(v ?? "meeting")}
+          >
+            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {EVENT_KINDS.map((k) => (
+                <SelectItem key={k} value={k}>{EVENT_KIND_LABEL[k]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* lead jen u úpravy události, která vznikla z leadu */}
+        {event?.leadId && leads.length > 0 && (
           <div className="grid gap-1.5">
-            <Label>Typ</Label>
+            <Label>Lead</Label>
             <Select
-              items={{ meeting: "Schůzka", followup: "Follow-up" }}
-              value={kind}
-              onValueChange={(v) => setKind(v ?? "meeting")}
+              items={{ [NONE]: "Bez leadu", ...Object.fromEntries(leads.map((l) => [l.id, l.businessName])) }}
+              value={leadId}
+              onValueChange={(v) => setLeadId(v ?? NONE)}
             >
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="meeting">Schůzka</SelectItem>
-                <SelectItem value="followup">Follow-up</SelectItem>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Bez leadu" /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value={NONE}>Bez leadu</SelectItem>
+                {leads.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.businessName}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          {leads.length > 0 && (
-            <div className="grid gap-1.5">
-              <Label>Lead</Label>
-              <Select
-                items={{ [NONE]: "Bez leadu", ...Object.fromEntries(leads.map((l) => [l.id, l.businessName])) }}
-                value={leadId}
-                onValueChange={(v) => setLeadId(v ?? NONE)}
-              >
-                <SelectTrigger className="w-full"><SelectValue placeholder="Bez leadu" /></SelectTrigger>
-                <SelectContent className="max-h-60">
-                  <SelectItem value={NONE}>Bez leadu</SelectItem>
-                  {leads.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>{l.businessName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
+        )}
 
         <div className="grid gap-1.5">
           <Label htmlFor="ev-title">Název</Label>
           <Input id="ev-title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Barva</Label>
+          <ColorPicker value={color} onChange={setColor} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">

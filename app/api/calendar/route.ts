@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     title?: string;
     kind?: EventKind;
+    color?: string;
     startAt?: string;
     endAt?: string;
     allDay?: boolean;
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
       userId: user.id,
       leadId: body.leadId ?? null,
       kind: body.kind,
+      color: body.color || null,
       title: body.title.trim(),
       startAt: start,
       endAt: end && !Number.isNaN(end.getTime()) ? end : null,

@@ -13,6 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  COLOR_CHIP,
+  COLOR_DOT,
+  EVENT_KINDS,
+  EVENT_KIND_COLOR,
+  EVENT_KIND_LABEL,
+  eventColorToken,
+} from "@/lib/eventMeta";
 import { cn } from "@/lib/utils";
 
 const MONTHS = [
@@ -26,7 +34,8 @@ const HOUR_H = 44; // px na hodinu v týdenním zobrazení
 
 export interface CalEvent {
   id: string;
-  kind: "meeting" | "followup";
+  kind: string;
+  color: string | null;
   title: string;
   startAt: string | Date;
   endAt: string | Date | null;
@@ -40,17 +49,13 @@ export interface CalEvent {
   project: { id: string; name: string | null; vercelProjectId: string | null } | null;
 }
 
-type Cat = "meeting" | "invoice" | "followup";
-function categorize(e: CalEvent): Cat {
-  if (e.kind === "meeting") return "meeting";
-  if (e.projectId) return "invoice";
-  return "followup";
+// barva / popisek události (vlastní barva, jinak dle typu)
+function evChip(e: { kind: string; color: string | null }): string {
+  return COLOR_CHIP[eventColorToken(e)] ?? COLOR_CHIP.slate;
 }
-const CAT = {
-  meeting: { label: "Schůzka", chip: "bg-info/25 text-info border-info/55", dot: "bg-info" },
-  invoice: { label: "Faktura", chip: "bg-gold/25 text-gold border-gold/55", dot: "bg-gold" },
-  followup: { label: "Follow-up", chip: "bg-iris/25 text-iris border-iris/55", dot: "bg-iris" },
-} as const;
+function evLabel(e: { kind: string }): string {
+  return EVENT_KIND_LABEL[e.kind] ?? e.kind;
+}
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -74,6 +79,7 @@ function toEditable(e: CalEvent & { start: Date; end: Date | null }): EditableEv
   return {
     id: e.id,
     kind: e.kind,
+    color: e.color,
     title: e.title,
     startAt: e.start,
     endAt: e.end,
@@ -212,11 +218,11 @@ export function CalendarView({
         )}
 
         {/* legenda */}
-        <div className="ml-auto flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          {(["meeting", "followup", "invoice"] as Cat[]).map((c) => (
-            <span key={c} className="flex items-center gap-1">
-              <span className={cn("size-2 rounded-full", CAT[c].dot)} />
-              {CAT[c].label}
+        <div className="ml-auto flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          {EVENT_KINDS.map((k) => (
+            <span key={k} className="flex items-center gap-1">
+              <span className={cn("size-2 rounded-full", COLOR_DOT[EVENT_KIND_COLOR[k]])} />
+              {EVENT_KIND_LABEL[k]}
             </span>
           ))}
         </div>
@@ -244,7 +250,6 @@ export function CalendarView({
 type GridEvent = CalEvent & { start: Date; end: Date | null };
 
 function EventChip({ e, onEvent }: { e: GridEvent; onEvent: (e: GridEvent) => void }) {
-  const c = CAT[categorize(e)];
   return (
     <button
       onClick={(ev) => {
@@ -253,7 +258,7 @@ function EventChip({ e, onEvent }: { e: GridEvent; onEvent: (e: GridEvent) => vo
       }}
       className={cn(
         "block w-full truncate rounded border px-1 py-0.5 text-left text-[11px] leading-tight",
-        c.chip,
+        evChip(e),
         e.done && "line-through opacity-50",
       )}
       title={e.title}
@@ -409,12 +414,12 @@ function WeekGrid({
                 const top = Math.max(0, topFor(e.start));
                 const dur = e.end ? (e.end.getTime() - e.start.getTime()) / 3600000 : 1;
                 const height = Math.max(20, Math.min(dur, END_HOUR - START_HOUR) * HOUR_H - 2);
-                const c = CAT[categorize(e)];
+                const chip = evChip(e);
                 return (
                   <button
                     key={e.id}
                     onClick={(ev) => { ev.stopPropagation(); onEvent(e); }}
-                    className={cn("absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 text-left text-[11px] leading-tight", c.chip, e.done && "line-through opacity-50")}
+                    className={cn("absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 text-left text-[11px] leading-tight", chip, e.done && "line-through opacity-50")}
                     style={{ top, height }}
                     title={e.title}
                   >
@@ -481,7 +486,7 @@ function Section({
       <h2 className="mb-2 font-heading text-sm font-semibold">{title}</h2>
       <div className="glass divide-y divide-white/8 overflow-hidden rounded-2xl">
         {events.map((e) => {
-          const c = CAT[categorize(e)];
+          const chip = evChip(e);
           return (
             <div key={e.id} className="flex items-center gap-3 p-3">
               <div className="w-28 shrink-0 font-mono text-xs text-muted-foreground">
@@ -489,7 +494,7 @@ function Section({
                 <br />
                 {!e.allDay && fmtTime(e.start)}
               </div>
-              <span className={cn("shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider", c.chip)}>{c.label}</span>
+              <span className={cn("shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider", chip)}>{evLabel(e)}</span>
               <button onClick={() => onEvent(e)} className="min-w-0 flex-1 text-left">
                 <p className={cn("truncate font-medium", e.done && "line-through opacity-60")}>{e.title}</p>
                 <p className="truncate text-xs text-muted-foreground">

@@ -14,7 +14,7 @@ export default async function CalendarPage() {
       <PageHeader
         eyebrow="Plán"
         title="Kalendář"
-        actions={<NewEventDialog leads={leadOptions} />}
+        actions={<NewEventDialog />}
       />
       <CalendarView events={events} leads={leadOptions} />
     </PageContainer>

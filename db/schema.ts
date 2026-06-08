@@ -70,7 +70,12 @@ export const campaignStatusEnum = pgEnum("campaign_status", [
   "done",
 ]);
 
-export const eventKindEnum = pgEnum("event_kind", ["meeting", "followup"]);
+export const eventKindEnum = pgEnum("event_kind", [
+  "meeting",
+  "followup",
+  "invoice",
+  "other",
+]);
 
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "normal", "high"]);
 
@@ -280,6 +285,9 @@ export const calendarEvent = pgTable("calendar_event", {
     onDelete: "cascade",
   }),
   kind: eventKindEnum("kind").notNull(),
+  // volitelná vlastní barva (token: info/iris/gold/success/rose/cyan/slate);
+  // když je null, použije se výchozí barva podle typu
+  color: text("color"),
   title: text("title").notNull(),
   startAt: timestamp("start_at", { withTimezone: true }).notNull(),
   endAt: timestamp("end_at", { withTimezone: true }),

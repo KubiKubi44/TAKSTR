@@ -13,7 +13,10 @@ export async function POST(
 
   const set: Record<string, unknown> = { updatedAt: new Date() };
   if (typeof body.title === "string" && body.title.trim()) set.title = body.title.trim();
-  if (body.kind === "meeting" || body.kind === "followup") set.kind = body.kind as EventKind;
+  if (["meeting", "followup", "invoice", "other"].includes(body.kind as string)) {
+    set.kind = body.kind as EventKind;
+  }
+  if ("color" in body) set.color = typeof body.color === "string" && body.color ? body.color : null;
   if ("startAt" in body && body.startAt) {
     const d = new Date(body.startAt as string);
     if (!Number.isNaN(d.getTime())) set.startAt = d;
