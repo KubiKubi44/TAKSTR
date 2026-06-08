@@ -12,13 +12,12 @@ const OPTS = [
   { key: "dark", icon: Moon, label: "Tmavý" },
 ] as const;
 
-// Přepínač režimu schovaný za proklik: tlačítko s aktuální ikonou →
-// menu se třemi možnostmi (světlý / systém / tmavý).
+// Přepínač režimu za proklik. Ikona triggeru se vybírá CSS (dark: variantou)
+// podle třídy na <html> — žádné čtení theme při renderu, takže nevzniká
+// hydration mismatch. Menu (theme-závislé) se vykreslí až po otevření.
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  const current = OPTS.find((o) => o.key === theme) ?? OPTS[1];
-  const CurrentIcon = current.icon;
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -27,7 +26,8 @@ export function ThemeToggle() {
         title="Režim vzhledu"
         className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
       >
-        <CurrentIcon className="size-4" />
+        <Sun className="block size-4 dark:hidden" />
+        <Moon className="hidden size-4 dark:block" />
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
