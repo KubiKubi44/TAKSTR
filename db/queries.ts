@@ -330,8 +330,8 @@ export async function getExpenses() {
 }
 
 export async function getFinanceSummary() {
-  const rev = await getProjectRevenue();
-  const exp = await db.query.expense.findMany();
+  // revenue + výdaje paralelně
+  const [rev, exp] = await Promise.all([getProjectRevenue(), db.query.expense.findMany()]);
   const recurringCost = exp
     .filter((e) => e.recurring)
     .reduce((s, e) => s + e.amount, 0);
@@ -343,6 +343,7 @@ export async function getFinanceSummary() {
     mrr: rev.monthly,
     arr: rev.annual,
     buildTotal: rev.buildTotal,
+    paying: rev.paying,
     recurringCost,
     oneTimeCost,
     monthlyProfit,

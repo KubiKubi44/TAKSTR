@@ -105,7 +105,9 @@ export async function listVercelProjects(): Promise<VercelProject[]> {
 
   const res = await fetch(`${BASE}/v9/projects?${q.toString()}`, {
     headers: authHeaders(token),
-    cache: "no-store",
+    // krátký cache — seznam projektů se nemění po sekundách; /projekty pak
+    // nečeká na externí Vercel API při každém načtení
+    next: { revalidate: 60 },
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");

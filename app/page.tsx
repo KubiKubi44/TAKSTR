@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import {
   getDueInvoices,
   getFinanceSummary,
-  getProjectRevenue,
   getTasksGrouped,
   getUpcomingEvents,
 } from "@/db/queries";
@@ -37,20 +36,22 @@ export const dynamic = "force-dynamic";
 
 // Dashboard CHODU FIRMY: finance, fakturace, úkoly, kalendář.
 export default async function ProvozPage() {
-  const fin = await getFinanceSummary();
-  const revenue = await getProjectRevenue();
-  const dueInvoices = await getDueInvoices();
-  const tasks = await getTasksGrouped();
+  // nezávislé dotazy paralelně (rychlejší než za sebou)
+  const [fin, dueInvoices, tasks, upcoming] = await Promise.all([
+    getFinanceSummary(),
+    getDueInvoices(),
+    getTasksGrouped(),
+    getUpcomingEvents(6),
+  ]);
   const todayTasks = [...tasks.overdue, ...tasks.today];
   const weekTasks = tasks.week;
-  const upcoming = await getUpcomingEvents(6);
 
   return (
     <PageContainer>
       <PageHeader eyebrow="Chod firmy" title="Provoz" />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Metric label="MRR" value={czk(fin.mrr)} hint={`${revenue.paying} projektů ve správě`} tone="text-success" />
+        <Metric label="MRR" value={czk(fin.mrr)} hint={`${fin.paying} projektů ve správě`} tone="text-success" />
         <Metric label="Náklady / měsíc" value={czk(fin.recurringCost)} hint="opakované výdaje" tone="text-destructive" />
         <Metric
           label="Čistý zisk / měsíc"

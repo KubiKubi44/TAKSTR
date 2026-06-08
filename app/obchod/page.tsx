@@ -38,11 +38,14 @@ export const dynamic = "force-dynamic";
 
 // Dashboard OBCHODU: poptávky, kampaně, leady (akvizice).
 export default async function ObchodPage() {
-  const m = await getDashboardMetrics();
-  const leads = await listLeads();
-  const campaignRates = await getCampaignResponseRates();
-  const demandNew = await getDemandNewCount();
-  const demand = await listDemand();
+  // nezávislé dotazy paralelně
+  const [m, leads, campaignRates, demandNew, demand] = await Promise.all([
+    getDashboardMetrics(),
+    listLeads(),
+    getCampaignResponseRates(),
+    getDemandNewCount(),
+    listDemand(),
+  ]);
   const maxFunnel = Math.max(1, ...Object.values(m.statusCounts));
 
   // nejlepší leady podle PŘÍLEŽITOSTI (ne jen skóre webu)

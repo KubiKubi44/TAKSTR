@@ -57,14 +57,15 @@ export default async function ProjectsPage({
   const showHidden = sp.hidden === "1";
   const sort = sp.sort && sp.sort in SORTS ? sp.sort : "monthly";
 
-  let vercelError: string | null = null;
-  let vercel: Awaited<ReturnType<typeof listVercelProjects>> = [];
-  try {
-    vercel = await listVercelProjects();
-  } catch (err) {
-    vercelError = (err as Error).message;
-  }
-  const meta = await listProjectMeta();
+  // Vercel API (pomalé, externí) běží paralelně s DB dotazem
+  const [vercelRes, meta] = await Promise.all([
+    listVercelProjects()
+      .then((v) => ({ v, err: null as string | null }))
+      .catch((e) => ({ v: [] as Awaited<ReturnType<typeof listVercelProjects>>, err: (e as Error).message })),
+    listProjectMeta(),
+  ]);
+  const vercel = vercelRes.v;
+  const vercelError = vercelRes.err;
   const metaByVercelId = new Map(
     meta.filter((m) => m.vercelProjectId).map((m) => [m.vercelProjectId!, m]),
   );
