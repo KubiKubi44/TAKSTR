@@ -7,6 +7,10 @@
     {
       "path": "/api/demand/poll",
       "schedule": "0 7,12,17 * * *"
+    },
+    {
+      "path": "/api/followups/run",
+      "schedule": "0 8 * * 1-5"
     }
   ]
 }

@@ -10,7 +10,7 @@ import {
   type ActivityActor,
   type LeadSource,
 } from "@/db/schema";
-import { getLeadWithRelations } from "@/db/queries";
+import { getLeadsForFollowup, getLeadWithRelations } from "@/db/queries";
 import { analyzeWebsite } from "@/lib/analyzer";
 import { lookupAres } from "@/lib/ares";
 import { lookupRating, placesEnabled } from "@/lib/places";
@@ -187,7 +187,7 @@ export async function enrichLead(leadId: string, actor: ActivityActor) {
 // ── Generování draftu (s notifikací do Telegramu) ────────────
 export async function generateDraftForLead(
   leadId: string,
-  opts: { editInstruction?: string; actor: ActivityActor },
+  opts: { editInstruction?: string; actor: ActivityActor; keepStatus?: boolean },
 ) {
   const leadRow = await getLeadWithRelations(leadId);
   if (!leadRow) throw new PipelineError("Lead nenalezen", 404);
@@ -248,13 +248,23 @@ export async function generateDraftForLead(
     })
     .returning();
 
-  await updateLeadStatus({
-    leadId: leadRow.id,
-    status: "drafted",
-    from: leadRow.status,
-    actor: opts.actor,
-    extra: { draftId: draft.id, version, editInstruction: opts.editInstruction ?? null },
-  });
+  if (opts.keepStatus) {
+    // follow-up: nový draft, ale stav leadu necháme (zůstává „odesláno")
+    await logActivity({
+      leadId: leadRow.id,
+      type: "note",
+      actor: opts.actor,
+      payload: { event: "followup_drafted", draftId: draft.id, version },
+    });
+  } else {
+    await updateLeadStatus({
+      leadId: leadRow.id,
+      status: "drafted",
+      from: leadRow.status,
+      actor: opts.actor,
+      extra: { draftId: draft.id, version, editInstruction: opts.editInstruction ?? null },
+    });
+  }
 
   // notifikace do Telegramu (best-effort — nesmí shodit generování)
   await notifyNewDraft(leadRow.id).catch(() => {});
@@ -323,6 +333,34 @@ export async function sendLeadDraft(leadId: string, actor: ActivityActor) {
   });
 
   return { providerId, to: recipient, draftVersion: draft.version };
+}
+
+// ── Auto-follow-upy ──────────────────────────────────────────
+const FOLLOWUP_INSTRUCTION =
+  "Tohle je FOLLOW-UP na předchozí e-mail, na který zatím nepřišla odpověď. " +
+  "Napiš krátké, zdvořilé připomenutí (3–5 vět), bez nátlaku. Navaž na původní " +
+  "e-mail (neopakuj ho celý), znovu nabídni krátký hovor nebo ukázku a nech to " +
+  "lehké. Předmět může začínat „Re:“.";
+
+// Projde zralé odeslané leady bez odpovědi a vygeneruje follow-up draft
+// (čeká na schválení; stav leadu zůstává „odesláno“). Vyžaduje ANTHROPIC_API_KEY.
+export async function runFollowups(days = 5, cap = 10) {
+  const leads = await getLeadsForFollowup(days, cap);
+  let generated = 0;
+  let failed = 0;
+  for (const l of leads) {
+    try {
+      await generateDraftForLead(l.id, {
+        editInstruction: FOLLOWUP_INSTRUCTION,
+        actor: "system",
+        keepStatus: true,
+      });
+      generated++;
+    } catch {
+      failed++;
+    }
+  }
+  return { candidates: leads.length, generated, failed };
 }
 
 // ── Označit odpovězeno (inbound) ─────────────────────────────

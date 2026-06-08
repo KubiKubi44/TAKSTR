@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FollowupButton } from "@/components/followup-button";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { OpportunityBadge } from "@/components/opportunity-badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -62,7 +63,7 @@ export default async function ObchodPage() {
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="Akvizice" title="Obchod" />
+      <PageHeader eyebrow="Akvizice" title="Obchod" actions={<FollowupButton />} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Metric

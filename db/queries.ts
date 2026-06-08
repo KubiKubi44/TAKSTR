@@ -92,6 +92,32 @@ export async function listLeads(opts: {
 
 export type LeadListItem = Awaited<ReturnType<typeof listLeads>>[number];
 
+// Leady zralé na follow-up: odesláno, bez odpovědi, poslední outbound
+// starší než `days` dní a zatím bez novějšího (pending) draftu.
+export async function getLeadsForFollowup(days: number, cap = 10) {
+  const cutoff = Date.now() - days * 86400000;
+  const rows = await db.query.lead.findMany({
+    where: eq(lead.status, "sent"),
+    with: {
+      outreach: { orderBy: (o, { desc }) => desc(o.createdAt) },
+      drafts: { orderBy: (d, { desc }) => desc(d.createdAt), limit: 1 },
+    },
+  });
+  const due = rows.filter((l) => {
+    const lastOut = l.outreach.find((o) => o.direction === "outbound" && o.sentAt);
+    if (!lastOut?.sentAt) return false;
+    if (new Date(lastOut.sentAt).getTime() > cutoff) return false; // ještě čerstvé
+    if (l.outreach.some((o) => o.direction === "inbound")) return false; // odpověděl
+    const latest = l.drafts[0];
+    // už máme novější draft než odeslání → follow-up čeká na schválení
+    if (latest && new Date(latest.createdAt).getTime() > new Date(lastOut.sentAt).getTime()) {
+      return false;
+    }
+    return true;
+  });
+  return due.slice(0, cap);
+}
+
 // Teplé poptávky z portálů. Default skryje vyřízené (dismissed).
 export async function listDemand(opts: { status?: DemandStatus } = {}) {
   return db.query.demandLead.findMany({
