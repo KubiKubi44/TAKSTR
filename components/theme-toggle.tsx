@@ -1,21 +1,40 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
-// Přepínač světlý/tmavý. Ikona se vybírá CSS variantou (dark:) podle třídy
-// na <html> — žádný mounted-state (nevadí hydrataci ani lint pravidlu).
+const OPTS = [
+  { key: "light", icon: Sun, label: "Světlý" },
+  { key: "system", icon: Monitor, label: "Systém" },
+  { key: "dark", icon: Moon, label: "Tmavý" },
+] as const;
+
+// Segmentový přepínač světlý / systém / tmavý.
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   return (
-    <button
-      type="button"
-      aria-label="Přepnout světlý/tmavý režim"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
-    >
-      <Sun className="hidden size-4 dark:block" />
-      <Moon className="block size-4 dark:hidden" />
-    </button>
+    <div className="flex items-center gap-0.5">
+      {OPTS.map((o) => {
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.key}
+            type="button"
+            aria-label={o.label}
+            title={o.label}
+            onClick={() => setTheme(o.key)}
+            className={cn(
+              "rounded-full p-1.5 transition-colors",
+              theme === o.key
+                ? "bg-foreground/12 text-foreground"
+                : "text-muted-foreground hover:bg-foreground/6 hover:text-foreground",
+            )}
+          >
+            <Icon className="size-4" />
+          </button>
+        );
+      })}
+    </div>
   );
 }

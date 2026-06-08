@@ -1,18 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { EventDialog, type EditableEvent } from "@/components/event-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   COLOR_CHIP,
   COLOR_DOT,
@@ -28,9 +18,6 @@ const MONTHS = [
   "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec",
 ];
 const WEEKDAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
-const START_HOUR = 7;
-const END_HOUR = 22;
-const HOUR_H = 44; // px na hodinu v týdenním zobrazení
 
 export interface CalEvent {
   id: string;
@@ -49,40 +36,32 @@ export interface CalEvent {
   project: { id: string; name: string | null; vercelProjectId: string | null } | null;
 }
 
-// barva / popisek události (vlastní barva, jinak dle typu)
-function evChip(e: { kind: string; color: string | null }): string {
-  return COLOR_CHIP[eventColorToken(e)] ?? COLOR_CHIP.slate;
-}
-function evLabel(e: { kind: string }): string {
-  return EVENT_KIND_LABEL[e.kind] ?? e.kind;
-}
-
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 function dayKey(d: Date) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
-function mondayOf(d: Date) {
-  const s = startOfDay(d);
-  s.setDate(s.getDate() - ((s.getDay() + 6) % 7));
-  return s;
-}
 function fmtTime(d: Date) {
   return d.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
 }
-function fmtDate(d: Date) {
-  return d.toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", year: "numeric" });
+function cap(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
+const evChip = (e: { kind: string; color: string | null }) =>
+  COLOR_CHIP[eventColorToken(e)] ?? COLOR_CHIP.slate;
+const evDot = (e: { kind: string; color: string | null }) =>
+  COLOR_DOT[eventColorToken(e)] ?? COLOR_DOT.slate;
+const evLabel = (e: { kind: string }) => EVENT_KIND_LABEL[e.kind] ?? e.kind;
 
-function toEditable(e: CalEvent & { start: Date; end: Date | null }): EditableEvent {
+function toEditable(e: CalEvent): EditableEvent {
   return {
     id: e.id,
     kind: e.kind,
     color: e.color,
     title: e.title,
-    startAt: e.start,
-    endAt: e.end,
+    startAt: e.startAt,
+    endAt: e.endAt,
     allDay: e.allDay,
     location: e.location,
     note: e.note,
@@ -98,127 +77,85 @@ export function CalendarView({
   events: CalEvent[];
   leads: { id: string; businessName: string }[];
 }) {
-  const router = useRouter();
-  const [view, setView] = useState("month");
-  const today = startOfDay(new Date());
-  const [cursor, setCursor] = useState(() => ({
-    y: today.getFullYear(),
-    m: today.getMonth(),
-    d: today.getDate(),
-  }));
-  const cursorDate = new Date(cursor.y, cursor.m, cursor.d);
-
+  const [today] = useState(() => new Date());
+  const [cursor, setCursor] = useState(() => ({ y: today.getFullYear(), m: today.getMonth() }));
+  const [selected, setSelected] = useState(() => startOfDay(today));
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editEvent, setEditEvent] = useState<EditableEvent | null>(null);
+  const [editing, setEditing] = useState<EditableEvent | null>(null);
   const [presetStart, setPresetStart] = useState<Date | null>(null);
 
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const i = setInterval(tick, 60000);
-    return () => clearInterval(i);
-  }, []);
-
-  const parsed = useMemo(
-    () =>
-      events.map((e) => ({
-        ...e,
-        start: new Date(e.startAt),
-        end: e.endAt ? new Date(e.endAt) : null,
-      })),
-    [events],
-  );
-  type PEvent = (typeof parsed)[number];
-
-  const byDay = useMemo(() => {
-    const map = new Map<string, PEvent[]>();
-    for (const e of parsed) {
-      const k = dayKey(e.start);
-      const arr = map.get(k) ?? [];
-      arr.push(e);
-      map.set(k, arr);
-    }
-    for (const arr of map.values()) arr.sort((a, b) => a.start.getTime() - b.start.getTime());
-    return map;
-  }, [parsed]);
-
-  function openCreate(date: Date) {
-    setEditEvent(null);
-    setPresetStart(date);
-    setDialogOpen(true);
+  // události podle dne
+  const byDay = new Map<string, CalEvent[]>();
+  for (const e of events) {
+    const k = dayKey(new Date(e.startAt));
+    const arr = byDay.get(k);
+    if (arr) arr.push(e);
+    else byDay.set(k, [e]);
   }
-  function openEdit(e: PEvent) {
+  for (const arr of byDay.values()) {
+    arr.sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
+  }
+  const dayEvents = byDay.get(dayKey(selected)) ?? [];
+
+  function openEdit(e: CalEvent) {
+    setEditing(toEditable(e));
     setPresetStart(null);
-    setEditEvent(toEditable(e));
+    setDialogOpen(true);
+  }
+  function openCreate(d: Date) {
+    const s = new Date(d);
+    s.setHours(9, 0, 0, 0);
+    setEditing(null);
+    setPresetStart(s);
     setDialogOpen(true);
   }
 
-  function shift(delta: number) {
-    setCursor((c) => {
-      const base = new Date(c.y, c.m, c.d);
-      if (view === "week") base.setDate(base.getDate() + delta * 7);
-      else base.setMonth(base.getMonth() + delta);
-      return { y: base.getFullYear(), m: base.getMonth(), d: base.getDate() };
-    });
-  }
-  function goToday() {
-    setCursor({ y: today.getFullYear(), m: today.getMonth(), d: today.getDate() });
-  }
-
-  async function quickDone(id: string) {
-    await fetch(`/api/calendar/${id}/done`, { method: "POST" });
-    router.refresh();
-  }
-
-  // ── label v hlavičce
-  const weekStart = mondayOf(cursorDate);
-  const headerLabel =
-    view === "week"
-      ? `${weekStart.getDate()}.–${new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6).getDate()}. ${MONTHS[weekStart.getMonth()].toLowerCase()} ${weekStart.getFullYear()}`
-      : `${MONTHS[cursor.m]} ${cursor.y}`;
+  // mřížka měsíce (Po–Ne, 6 týdnů)
+  const first = new Date(cursor.y, cursor.m, 1);
+  const offset = (first.getDay() + 6) % 7;
+  const gridStart = new Date(cursor.y, cursor.m, 1 - offset);
+  const days = Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    return d;
+  });
 
   return (
     <div>
+      {/* lišta měsíce */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Tabs value={view} onValueChange={(v) => setView(v ?? "month")}>
-          <TabsList>
-            <TabsTrigger value="month">Měsíc</TabsTrigger>
-            <TabsTrigger value="week">Týden</TabsTrigger>
-            <TabsTrigger value="list">Seznam</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {view !== "list" && (
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => shift(-1)}>←</Button>
-            {view === "month" ? (
-              <>
-                <Select value={String(cursor.m)} onValueChange={(v) => setCursor((c) => ({ ...c, m: Number(v) }))}>
-                  <SelectTrigger size="sm" className="w-32"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((n, i) => <SelectItem key={i} value={String(i)}>{n}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={String(cursor.y)} onValueChange={(v) => setCursor((c) => ({ ...c, y: Number(v) }))}>
-                  <SelectTrigger size="sm" className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 9 }, (_, i) => today.getFullYear() - 3 + i).map((y) => (
-                      <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
-            ) : (
-              <span className="min-w-52 text-center font-heading text-sm font-semibold capitalize">{headerLabel}</span>
-            )}
-            <Button size="sm" variant="outline" onClick={() => shift(1)}>→</Button>
-            <Button size="sm" variant="ghost" onClick={goToday}>Dnes</Button>
-          </div>
-        )}
-
-        {/* legenda */}
-        <div className="ml-auto flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Předchozí měsíc"
+            onClick={() => setCursor((c) => ({ y: c.m === 0 ? c.y - 1 : c.y, m: (c.m + 11) % 12 }))}
+          >
+            ‹
+          </Button>
+          <span className="w-44 text-center font-heading text-base font-semibold">
+            {MONTHS[cursor.m]} {cursor.y}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Další měsíc"
+            onClick={() => setCursor((c) => ({ y: c.m === 11 ? c.y + 1 : c.y, m: (c.m + 1) % 12 }))}
+          >
+            ›
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setCursor({ y: today.getFullYear(), m: today.getMonth() });
+            setSelected(startOfDay(today));
+          }}
+        >
+          Dnes
+        </Button>
+        <div className="ml-auto flex flex-wrap gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           {EVENT_KINDS.map((k) => (
             <span key={k} className="flex items-center gap-1">
               <span className={cn("size-2 rounded-full", COLOR_DOT[EVENT_KIND_COLOR[k]])} />
@@ -228,289 +165,144 @@ export function CalendarView({
         </div>
       </div>
 
-      {view === "month" && (
-        <MonthGrid cursor={cursor} today={today} byDay={byDay} onEvent={openEdit} onCreate={openCreate} />
-      )}
-      {view === "week" && (
-        <WeekGrid weekStart={weekStart} today={today} now={now} byDay={byDay} onEvent={openEdit} onCreate={openCreate} />
-      )}
-      {view === "list" && <ListView parsed={parsed} today={today} onEvent={openEdit} onDone={quickDone} />}
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        {/* měsíční mřížka */}
+        <div className="glass rounded-2xl p-2">
+          <div className="grid grid-cols-7">
+            {WEEKDAYS.map((w) => (
+              <div
+                key={w}
+                className="py-2 text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+              >
+                {w}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((d, i) => {
+              const evs = byDay.get(dayKey(d)) ?? [];
+              const inMonth = d.getMonth() === cursor.m;
+              const isToday = dayKey(d) === dayKey(today);
+              const isSel = dayKey(d) === dayKey(selected);
+              return (
+                <div
+                  key={i}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelected(startOfDay(d))}
+                  onDoubleClick={() => openCreate(d)}
+                  className={cn(
+                    "flex min-h-22 cursor-pointer flex-col gap-1 rounded-lg border p-1.5 transition-colors",
+                    isSel ? "border-foreground/40 bg-foreground/5" : "border-transparent hover:bg-foreground/5",
+                    !inMonth && "opacity-40",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "font-mono text-xs tabular-nums",
+                      isToday
+                        ? "flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {d.getDate()}
+                  </span>
+                  <div className="space-y-0.5">
+                    {evs.slice(0, 3).map((e) => (
+                      <button
+                        key={e.id}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          openEdit(e);
+                        }}
+                        className={cn(
+                          "block w-full truncate rounded border px-1 text-left text-[10px] leading-tight",
+                          evChip(e),
+                          e.done && "line-through opacity-50",
+                        )}
+                      >
+                        {!e.allDay && `${fmtTime(new Date(e.startAt))} `}
+                        {e.title}
+                      </button>
+                    ))}
+                    {evs.length > 3 && (
+                      <span className="block px-1 text-[10px] text-muted-foreground">
+                        +{evs.length - 3} dalších
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* panel vybraného dne */}
+        <div className="glass h-fit rounded-2xl p-4">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                {cap(selected.toLocaleDateString("cs-CZ", { weekday: "long" }))}
+              </p>
+              <h2 className="font-heading text-lg font-semibold tracking-tight">
+                {selected.toLocaleDateString("cs-CZ", { day: "numeric", month: "long" })}
+              </h2>
+            </div>
+            <Button size="sm" onClick={() => openCreate(selected)}>
+              + Přidat
+            </Button>
+          </div>
+
+          {dayEvents.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Žádné události.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {dayEvents.map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => openEdit(e)}
+                  className="glass glass-hover block w-full rounded-xl p-3 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={cn("size-2 shrink-0 rounded-full", evDot(e))} />
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {e.allDay ? "celý den" : fmtTime(new Date(e.startAt))}
+                    </span>
+                    <span
+                      className={cn(
+                        "ml-auto rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider",
+                        evChip(e),
+                      )}
+                    >
+                      {evLabel(e)}
+                    </span>
+                  </div>
+                  <p className={cn("mt-1.5 font-medium leading-snug", e.done && "line-through opacity-60")}>
+                    {e.title}
+                  </p>
+                  {(e.location || e.lead || e.project) && (
+                    <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                      {e.location && <span>{e.location}</span>}
+                      {e.lead && <span>· {e.lead.businessName}</span>}
+                      {e.project && <span>· {e.project.name ?? "projekt"}</span>}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <EventDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        event={editEvent}
+        event={editing}
         presetStart={presetStart}
         leads={leads}
       />
-    </div>
-  );
-}
-
-type GridEvent = CalEvent & { start: Date; end: Date | null };
-
-function EventChip({ e, onEvent }: { e: GridEvent; onEvent: (e: GridEvent) => void }) {
-  return (
-    <button
-      onClick={(ev) => {
-        ev.stopPropagation();
-        onEvent(e);
-      }}
-      className={cn(
-        "block w-full truncate rounded border px-1 py-0.5 text-left text-[11px] leading-tight",
-        evChip(e),
-        e.done && "line-through opacity-50",
-      )}
-      title={e.title}
-    >
-      {!e.allDay && `${fmtTime(e.start)} `}
-      {e.title}
-    </button>
-  );
-}
-
-function MonthGrid({
-  cursor,
-  today,
-  byDay,
-  onEvent,
-  onCreate,
-}: {
-  cursor: { y: number; m: number };
-  today: Date;
-  byDay: Map<string, GridEvent[]>;
-  onEvent: (e: GridEvent) => void;
-  onCreate: (d: Date) => void;
-}) {
-  const first = new Date(cursor.y, cursor.m, 1);
-  const startWeekday = (first.getDay() + 6) % 7;
-  const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
-  const cells: (Date | null)[] = [];
-  for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(cursor.y, cursor.m, d));
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  return (
-    <div className="glass overflow-hidden rounded-2xl">
-      <div className="grid grid-cols-7 border-b border-white/10">
-        {WEEKDAYS.map((w) => (
-          <div key={w} className="p-2 text-center font-mono text-xs uppercase tracking-wider text-muted-foreground">{w}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {cells.map((cell, i) => {
-          const evs = cell ? byDay.get(dayKey(cell)) ?? [] : [];
-          const isToday = cell && dayKey(cell) === dayKey(today);
-          return (
-            <div
-              key={i}
-              onClick={() => cell && onCreate(new Date(cell.getFullYear(), cell.getMonth(), cell.getDate(), 9))}
-              className={cn(
-                "min-h-24 border-t border-r border-white/5 p-1.5 nth-[7n]:border-r-0",
-                cell ? "cursor-pointer hover:bg-white/5" : "bg-black/10",
-              )}
-            >
-              {cell && (
-                <>
-                  <div className={cn(
-                    "mb-1 inline-flex h-5 w-5 items-center justify-center rounded-full font-mono text-xs",
-                    isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-                  )}>
-                    {cell.getDate()}
-                  </div>
-                  <div className="space-y-1">
-                    {evs.slice(0, 4).map((e) => <EventChip key={e.id} e={e} onEvent={onEvent} />)}
-                    {evs.length > 4 && <p className="px-1 text-[10px] text-muted-foreground">+{evs.length - 4} dalších</p>}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function WeekGrid({
-  weekStart,
-  today,
-  now,
-  byDay,
-  onEvent,
-  onCreate,
-}: {
-  weekStart: Date;
-  today: Date;
-  now: Date | null;
-  byDay: Map<string, GridEvent[]>;
-  onEvent: (e: GridEvent) => void;
-  onCreate: (d: Date) => void;
-}) {
-  const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i));
-  const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
-  const totalH = (END_HOUR - START_HOUR) * HOUR_H;
-
-  const topFor = (d: Date) => (d.getHours() + d.getMinutes() / 60 - START_HOUR) * HOUR_H;
-
-  return (
-    <div className="glass overflow-hidden rounded-2xl">
-      {/* hlavička dnů */}
-      <div className="grid border-b border-white/10" style={{ gridTemplateColumns: "3rem repeat(7, 1fr)" }}>
-        <div />
-        {days.map((d) => {
-          const isToday = dayKey(d) === dayKey(today);
-          return (
-            <div key={d.toISOString()} className="border-l border-white/5 p-2 text-center">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{WEEKDAYS[(d.getDay() + 6) % 7]}</span>
-              <div className={cn("mx-auto mt-0.5 flex h-6 w-6 items-center justify-center rounded-full font-mono text-xs", isToday ? "bg-primary text-primary-foreground" : "")}>
-                {d.getDate()}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* celý den řádek */}
-      <div className="grid border-b border-white/10" style={{ gridTemplateColumns: "3rem repeat(7, 1fr)" }}>
-        <div className="p-1 text-right font-mono text-[9px] uppercase text-muted-foreground">celý den</div>
-        {days.map((d) => {
-          const allDay = (byDay.get(dayKey(d)) ?? []).filter((e) => e.allDay);
-          return (
-            <div key={d.toISOString()} className="min-h-7 space-y-1 border-l border-white/5 p-1">
-              {allDay.map((e) => <EventChip key={e.id} e={e} onEvent={onEvent} />)}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* hodinová mřížka */}
-      <div className="grid max-h-[70vh] overflow-y-auto" style={{ gridTemplateColumns: "3rem repeat(7, 1fr)" }}>
-        {/* časová osa */}
-        <div className="relative" style={{ height: totalH }}>
-          {hours.map((h) => (
-            <div key={h} className="absolute right-1 -translate-y-1/2 font-mono text-[10px] text-muted-foreground" style={{ top: (h - START_HOUR) * HOUR_H }}>
-              {h}:00
-            </div>
-          ))}
-        </div>
-        {days.map((d) => {
-          const timed = (byDay.get(dayKey(d)) ?? []).filter((e) => !e.allDay);
-          const isToday = dayKey(d) === dayKey(today);
-          const nowTop = now && now.getHours() + now.getMinutes() / 60 >= START_HOUR && now.getHours() < END_HOUR
-            ? (now.getHours() + now.getMinutes() / 60 - START_HOUR) * HOUR_H
-            : null;
-          return (
-            <div key={d.toISOString()} className="relative border-l border-white/5" style={{ height: totalH }}>
-              {hours.map((h) => (
-                <div
-                  key={h}
-                  onClick={() => onCreate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), h))}
-                  className="cursor-pointer border-t border-white/5 hover:bg-white/5"
-                  style={{ height: HOUR_H }}
-                />
-              ))}
-              {timed.map((e) => {
-                const top = Math.max(0, topFor(e.start));
-                const dur = e.end ? (e.end.getTime() - e.start.getTime()) / 3600000 : 1;
-                const height = Math.max(20, Math.min(dur, END_HOUR - START_HOUR) * HOUR_H - 2);
-                const chip = evChip(e);
-                return (
-                  <button
-                    key={e.id}
-                    onClick={(ev) => { ev.stopPropagation(); onEvent(e); }}
-                    className={cn("absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 text-left text-[11px] leading-tight", chip, e.done && "line-through opacity-50")}
-                    style={{ top, height }}
-                    title={e.title}
-                  >
-                    <span className="font-mono">{fmtTime(e.start)}</span> {e.title}
-                  </button>
-                );
-              })}
-              {isToday && nowTop !== null && (
-                <div className="pointer-events-none absolute inset-x-0 z-10 border-t border-destructive" style={{ top: nowTop }}>
-                  <span className="absolute left-0 -top-1 size-2 rounded-full bg-destructive" />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function ListView({
-  parsed,
-  today,
-  onEvent,
-  onDone,
-}: {
-  parsed: GridEvent[];
-  today: Date;
-  onEvent: (e: GridEvent) => void;
-  onDone: (id: string) => void;
-}) {
-  const upcoming = parsed.filter((e) => e.start >= today).sort((a, b) => a.start.getTime() - b.start.getTime());
-  const past = parsed.filter((e) => e.start < today).sort((a, b) => b.start.getTime() - a.start.getTime());
-  return (
-    <div className="space-y-6">
-      <Section title="Nadcházející" events={upcoming} onEvent={onEvent} onDone={onDone} />
-      {past.length > 0 && <Section title="Proběhlé" events={past} onEvent={onEvent} onDone={onDone} muted />}
-    </div>
-  );
-}
-
-function Section({
-  title,
-  events,
-  onEvent,
-  onDone,
-  muted = false,
-}: {
-  title: string;
-  events: GridEvent[];
-  onEvent: (e: GridEvent) => void;
-  onDone: (id: string) => void;
-  muted?: boolean;
-}) {
-  if (events.length === 0)
-    return (
-      <div>
-        <h2 className="mb-2 font-heading text-sm font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">Žádné události.</p>
-      </div>
-    );
-  return (
-    <div className={cn(muted && "opacity-70")}>
-      <h2 className="mb-2 font-heading text-sm font-semibold">{title}</h2>
-      <div className="glass divide-y divide-white/8 overflow-hidden rounded-2xl">
-        {events.map((e) => {
-          const chip = evChip(e);
-          return (
-            <div key={e.id} className="flex items-center gap-3 p-3">
-              <div className="w-28 shrink-0 font-mono text-xs text-muted-foreground">
-                {fmtDate(e.start)}
-                <br />
-                {!e.allDay && fmtTime(e.start)}
-              </div>
-              <span className={cn("shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider", chip)}>{evLabel(e)}</span>
-              <button onClick={() => onEvent(e)} className="min-w-0 flex-1 text-left">
-                <p className={cn("truncate font-medium", e.done && "line-through opacity-60")}>{e.title}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {e.lead && <Link href={`/leady/${e.lead.id}`} className="hover:text-primary">{e.lead.businessName}</Link>}
-                  {e.project && <Link href={`/projekty/${e.project.vercelProjectId ?? e.project.id}`} className="hover:text-primary">{e.project.name ?? "projekt"}</Link>}
-                  {(e.lead || e.project) && (e.location || e.note) && " · "}
-                  {e.location}
-                  {e.location && e.note && " · "}
-                  {e.note}
-                </p>
-              </button>
-              <Button size="sm" variant="ghost" onClick={() => onDone(e.id)}>{e.done ? "↺" : "✓"}</Button>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
