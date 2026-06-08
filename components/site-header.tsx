@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 // Vlevo = chod firmy (provoz), vpravo = obchod (akvizice)
@@ -38,15 +39,15 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
       className={cn(
         "rounded-full px-3 py-1.5 whitespace-nowrap transition-colors",
         isActive(item.href)
-          ? "bg-white/10 text-foreground shadow-[inset_0_1px_0_0_oklch(1_0_0/0.18)]"
-          : "text-muted-foreground hover:bg-white/6 hover:text-foreground",
+          ? "bg-foreground/10 text-foreground"
+          : "text-muted-foreground hover:bg-foreground/6 hover:text-foreground",
       )}
     >
       {item.label}
     </Link>
   );
 
-  const divider = <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />;
+  const divider = <span className="mx-1 h-5 w-px shrink-0 bg-border" />;
 
   return (
     // plovoucí dock — centrovaný skleněný pill kousek od horního okraje
@@ -57,23 +58,22 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
         <Link
           href="/"
           aria-label="TAK — domů"
-          className="select-none bg-gradient-to-b from-white via-zinc-200 to-zinc-400 bg-clip-text px-2.5 font-heading text-[15px] font-bold tracking-[0.22em] text-transparent"
+          className="select-none bg-gradient-to-b from-foreground to-muted-foreground bg-clip-text px-2.5 font-heading text-[15px] font-bold tracking-[0.22em] text-transparent"
         >
           TAK
         </Link>
         {divider}
         {RIGHT_NAV.map(renderLink)}
+        {divider}
+        <ThemeToggle />
         {authEnabled && (
-          <>
-            {divider}
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-white/6 hover:text-foreground"
-            >
-              Odhlásit
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-full px-3 py-1.5 text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground"
+          >
+            Odhlásit
+          </button>
         )}
       </nav>
     </header>

@@ -11,22 +11,17 @@
    kterou sklo láme — proto výplň držíme dost průsvitnou.            */
 @utility glass {
   background-image:
-    /* jemný specular v rohu (matnější sklo) */
-    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.08), transparent 48%),
-    /* lehký horní sheen */
-    linear-gradient(to bottom, oklch(1 0 0 / 0.05), oklch(1 0 0 / 0) 30%),
-    /* průsvitné tělo */
-    linear-gradient(180deg,
-      color-mix(in oklch, var(--card) 46%, transparent),
-      color-mix(in oklch, var(--card) 64%, transparent));
-  -webkit-backdrop-filter: blur(26px) saturate(120%) brightness(1.03);
-  backdrop-filter: blur(26px) saturate(120%) brightness(1.03);
-  border: 1px solid oklch(1 0 0 / 0.09);
+    radial-gradient(135% 110% at 0% 0%, var(--glass-spec), transparent 48%),
+    linear-gradient(to bottom, var(--glass-sheen), transparent 30%),
+    linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
+  -webkit-backdrop-filter: blur(26px) saturate(125%) brightness(var(--glass-bright));
+  backdrop-filter: blur(26px) saturate(125%) brightness(var(--glass-bright));
+  border: 1px solid var(--glass-border);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.14), /* jemná horní hrana */
-    inset 0 0 0 1px oklch(1 0 0 / 0.03), /* vnitřní lem */
-    inset 0 -34px 50px -42px oklch(0 0 0 / 0.4), /* hloubka u dna */
-    0 18px 46px -24px oklch(0 0 0 / 0.5); /* plovoucí stín */
+    inset 0 1px 0 0 var(--glass-edge),
+    inset 0 0 0 1px var(--glass-inner),
+    inset 0 -34px 50px -42px var(--glass-depth),
+    0 18px 46px -24px var(--glass-cast);
   transition:
     transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1),
     box-shadow 0.4s ease,
@@ -35,19 +30,17 @@
 
 @utility glass-strong {
   background-image:
-    radial-gradient(135% 110% at 0% 0%, oklch(1 0 0 / 0.18), transparent 44%),
-    linear-gradient(to bottom, oklch(1 0 0 / 0.12), oklch(1 0 0 / 0) 36%),
-    linear-gradient(180deg,
-      color-mix(in oklch, var(--popover) 60%, transparent),
-      color-mix(in oklch, var(--popover) 74%, transparent));
-  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.07);
-  backdrop-filter: blur(40px) saturate(200%) brightness(1.07);
-  border: 1px solid oklch(1 0 0 / 0.14);
+    radial-gradient(135% 110% at 0% 0%, var(--glass-spec), transparent 44%),
+    linear-gradient(to bottom, var(--glass-sheen), transparent 36%),
+    linear-gradient(180deg, var(--glassS-fill-top), var(--glassS-fill-bottom));
+  -webkit-backdrop-filter: blur(40px) saturate(140%) brightness(var(--glass-bright));
+  backdrop-filter: blur(40px) saturate(140%) brightness(var(--glass-bright));
+  border: 1px solid var(--glass-border);
   box-shadow:
-    inset 0 1px 0 0 oklch(1 0 0 / 0.26),
-    inset 0 0 0 1px oklch(1 0 0 / 0.05),
-    inset 0 -30px 56px -42px oklch(0 0 0 / 0.55),
-    0 28px 64px -22px oklch(0 0 0 / 0.65);
+    inset 0 1px 0 0 var(--glass-edge),
+    inset 0 0 0 1px var(--glass-inner),
+    inset 0 -30px 56px -42px var(--glass-depth),
+    0 28px 64px -22px var(--glass-cast);
 }
 
 /* Interaktivní sklo — jemný „zdvih" a rozjasnění lemu při najetí. */
@@ -55,11 +48,11 @@
   cursor: pointer;
   &:hover {
     transform: translateY(-2px);
-    border-color: oklch(1 0 0 / 0.16);
+    border-color: var(--glass-hover-border);
     box-shadow:
-      inset 0 1px 0 0 oklch(1 0 0 / 0.18),
-      inset 0 0 0 1px oklch(1 0 0 / 0.05),
-      0 28px 60px -24px oklch(0 0 0 / 0.65);
+      inset 0 1px 0 0 var(--glass-hover-edge),
+      inset 0 0 0 1px var(--glass-inner),
+      0 28px 60px -24px var(--glass-cast);
   }
   &:active {
     transform: translateY(0);
@@ -116,28 +109,44 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Premium Monochrome — světlý režim, akcent = near-black */
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.17 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.17 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.62 0.12 178);
-  --primary-foreground: oklch(0.99 0.02 185);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --success: oklch(0.58 0.15 156);
-  --info: oklch(0.55 0.16 250);
-  --gold: oklch(0.7 0.13 78);
-  --iris: oklch(0.55 0.18 292);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.62 0.12 178);
+  --popover-foreground: oklch(0.17 0 0);
+  --primary: oklch(0.2 0 0);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.46 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.55 0.22 27);
+  --success: oklch(0.52 0.15 156);
+  --info: oklch(0.5 0.17 250);
+  --gold: oklch(0.6 0.12 70);
+  --iris: oklch(0.5 0.2 292);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.2 0 0);
+  /* světlé sklo — průsvitně bílý panel, tmavý lem, měkký stín */
+  --glass-spec: oklch(1 0 0 / 0.6);
+  --glass-sheen: oklch(1 0 0 / 0.45);
+  --glass-bright: 1;
+  --glass-border: oklch(0 0 0 / 0.08);
+  --glass-edge: oklch(1 0 0 / 0.7);
+  --glass-inner: oklch(0 0 0 / 0.02);
+  --glass-depth: oklch(0 0 0 / 0.05);
+  --glass-cast: oklch(0.45 0 0 / 0.16);
+  --glass-fill-top: color-mix(in oklch, var(--card) 64%, transparent);
+  --glass-fill-bottom: color-mix(in oklch, var(--card) 82%, transparent);
+  --glassS-fill-top: color-mix(in oklch, var(--popover) 74%, transparent);
+  --glassS-fill-bottom: color-mix(in oklch, var(--popover) 88%, transparent);
+  --glass-hover-border: oklch(0 0 0 / 0.14);
+  --glass-hover-edge: oklch(1 0 0 / 0.8);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -180,6 +189,21 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.82 0 0);
+  /* tmavé sklo — průsvitná tmavá výplň, světelná hrana, hluboký stín */
+  --glass-spec: oklch(1 0 0 / 0.08);
+  --glass-sheen: oklch(1 0 0 / 0.05);
+  --glass-bright: 1.03;
+  --glass-border: oklch(1 0 0 / 0.09);
+  --glass-edge: oklch(1 0 0 / 0.14);
+  --glass-inner: oklch(1 0 0 / 0.03);
+  --glass-depth: oklch(0 0 0 / 0.4);
+  --glass-cast: oklch(0 0 0 / 0.5);
+  --glass-fill-top: color-mix(in oklch, var(--card) 46%, transparent);
+  --glass-fill-bottom: color-mix(in oklch, var(--card) 64%, transparent);
+  --glassS-fill-top: color-mix(in oklch, var(--popover) 60%, transparent);
+  --glassS-fill-bottom: color-mix(in oklch, var(--popover) 74%, transparent);
+  --glass-hover-border: oklch(1 0 0 / 0.16);
+  --glass-hover-edge: oklch(1 0 0 / 0.18);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -214,7 +238,11 @@
     inset: 0;
     z-index: -2;
     background-color: var(--background);
-    /* temně černá — žádné světlo, jen jemná vinětace (ztmavení k okrajům) */
+    /* světlý režim: jemná vinětace ke krajům */
+    background-image: radial-gradient(130% 115% at 50% 28%, transparent 52%, oklch(0 0 0 / 0.06));
+  }
+  /* temně černá — žádné světlo, jen jemná vinětace */
+  .dark body::before {
     background-image: radial-gradient(135% 120% at 50% 32%, transparent 42%, oklch(0 0 0 / 0.55));
   }
   /* Jemné zrno pro „frosted" realismus skla. */
@@ -229,6 +257,10 @@
     background-size: 140px 140px;
   }
   ::selection {
+    background: oklch(0.2 0 0 / 0.14);
+    color: oklch(0.15 0 0);
+  }
+  .dark ::selection {
     background: oklch(0.95 0 0 / 0.88);
     color: oklch(0.15 0 0);
   }
