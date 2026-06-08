@@ -39,7 +39,11 @@ export default {
       try {
         const r = await fetch(ep, {
           method: "POST",
-          headers: { "content-type": "application/x-www-form-urlencoded" },
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            // DŮLEŽITÉ: bez User-Agenta vrací overpass-api.de 406 Not Acceptable
+            "user-agent": "leadgen-overpass-proxy/1.0 (kontakt: bartusek.tom@gmail.com)",
+          },
           body,
         });
         if (r.ok) {
