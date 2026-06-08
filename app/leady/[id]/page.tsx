@@ -25,6 +25,28 @@ const DRAFT_STATUS_LABEL: Record<string, string> = {
   discarded: "Zahozeno",
 };
 
+const DRAFT_STATUS_TONE: Record<string, string> = {
+  draft: "text-muted-foreground",
+  approved: "text-success",
+  sent: "text-info",
+  discarded: "text-destructive",
+};
+
+// barevná tečka u položky časové osy podle typu události
+function activityDot(type: string, payload: Record<string, unknown>): string {
+  if (type === "email_sent") return "bg-info";
+  if (type === "reply") return "bg-success";
+  if (type === "call") return "bg-gold";
+  if (type === "status_change") {
+    const to = payload.to as string;
+    if (to === "won") return "bg-success";
+    if (to === "dead") return "bg-destructive";
+    if (to === "meeting" || to === "replied") return "bg-gold";
+    return "bg-info";
+  }
+  return "bg-muted-foreground/40";
+}
+
 const DELIVERY_LABEL: Record<string, string> = {
   sent: "Odesláno",
   delayed: "Zdrženo",
@@ -38,8 +60,8 @@ const DELIVERY_LABEL: Record<string, string> = {
 
 function deliveryTone(status: string | null): string {
   if (status === "bounced" || status === "complained") return "text-destructive";
-  if (status === "opened" || status === "clicked" || status === "replied") return "text-primary";
-  if (status === "delivered") return "text-foreground";
+  if (status === "opened" || status === "clicked" || status === "replied") return "text-success";
+  if (status === "delivered") return "text-info";
   return "text-muted-foreground";
 }
 
@@ -198,7 +220,10 @@ export default async function LeadDetailPage({
                   <Card key={d.id} className="gap-2 p-4">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                        verze {d.version} · {DRAFT_STATUS_LABEL[d.status] ?? d.status}
+                        verze {d.version} ·{" "}
+                        <span className={DRAFT_STATUS_TONE[d.status] ?? "text-foreground"}>
+                          {DRAFT_STATUS_LABEL[d.status] ?? d.status}
+                        </span>
                       </span>
                       <span className="font-mono text-xs text-muted-foreground">
                         {fmt(d.createdAt)}
@@ -228,8 +253,11 @@ export default async function LeadDetailPage({
             <Card className="p-5">
               <ol className="space-y-3">
                 {lead.activities.map((a) => (
-                  <li key={a.id} className="flex gap-3 text-sm">
-                    <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
+                  <li key={a.id} className="flex items-baseline gap-3 text-sm">
+                    <span
+                      className={`mt-1 size-1.5 shrink-0 rounded-full ${activityDot(a.type, a.payload)}`}
+                    />
+                    <span className="w-20 shrink-0 font-mono text-xs text-muted-foreground">
                       {fmt(a.createdAt)}
                     </span>
                     <span className="flex-1">
@@ -253,9 +281,9 @@ export default async function LeadDetailPage({
               <OpportunityBadge opp={opp} />
             </div>
             <div className="space-y-2">
-              <OppBar label="Potřeba" value={opp.need} />
-              <OppBar label="Bonita" value={opp.money} />
-              <OppBar label="Dosažitelnost" value={opp.reach} />
+              <OppBar label="Potřeba" value={opp.need} tone="bg-info" />
+              <OppBar label="Bonita" value={opp.money} tone="bg-success" />
+              <OppBar label="Dosažitelnost" value={opp.reach} tone="bg-gold" />
             </div>
             {opp.reasons.length > 0 && (
               <p className="text-xs text-muted-foreground">{opp.reasons.join(" · ")}</p>
@@ -309,6 +337,7 @@ export default async function LeadDetailPage({
                     <Row
                       k="Hodnocení"
                       v={`${stars(e.rating)}${typeof e.reviews === "number" ? ` (${e.reviews})` : ""}`}
+                      tone="text-gold"
                     />
                   )}
                   {e.ico ? <Row k="IČO" v={String(e.ico)} /> : null}
@@ -352,7 +381,11 @@ export default async function LeadDetailPage({
                 return (
                   <dl className="space-y-1 text-sm">
                     <Row k="Builder / stack" v={analysis.builder ?? gen ?? "neznámý"} />
-                    <Row k="Mobilní (viewport)" v={analysis.mobileOk ? "ano" : "NE"} />
+                    <Row
+                      k="Mobilní (viewport)"
+                      v={analysis.mobileOk ? "ano" : "NE"}
+                      tone={analysis.mobileOk ? "text-success" : "text-destructive"}
+                    />
                     <Row
                       k="HTTPS / SSL"
                       v={
@@ -362,9 +395,20 @@ export default async function LeadDetailPage({
                             ? `ano (${sslDays} dní)`
                             : "ano"
                       }
+                      tone={
+                        !httpsOk
+                          ? "text-destructive"
+                          : sslDays != null && sslDays < 21
+                            ? "text-gold"
+                            : "text-success"
+                      }
                     />
                     {domDays != null && (
-                      <Row k="Doména vyprší" v={`za ${domDays} dní`} />
+                      <Row
+                        k="Doména vyprší"
+                        v={`za ${domDays} dní`}
+                        tone={domDays < 45 ? "text-destructive" : undefined}
+                      />
                     )}
                     {year != null && <Row k="Rok v patičce" v={String(year)} />}
                     <Row k="Anglická verze" v={analysis.hasEn ? "ano" : "ne"} />
@@ -466,22 +510,22 @@ export default async function LeadDetailPage({
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
     <div className="flex justify-between gap-2">
       <dt className="text-muted-foreground">{k}</dt>
-      <dd className="font-mono text-xs">{v}</dd>
+      <dd className={`font-mono text-xs ${tone ?? ""}`}>{v}</dd>
     </div>
   );
 }
 
-function OppBar({ label, value }: { label: string; value: number }) {
+function OppBar({ label, value, tone = "bg-primary" }: { label: string; value: number; tone?: string }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       <span className="w-24 shrink-0 text-muted-foreground">{label}</span>
       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
         <span
-          className="block h-full bg-primary"
+          className={`block h-full ${tone}`}
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </span>
