@@ -16,10 +16,28 @@ const OVERPASS_ENDPOINTS = [
 ];
 const NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/search";
 
-// Pošle Overpass dotaz na první funkční mirror. Při chybě spojení / 429 / 5xx
-// zkusí další; selže až když selžou všechny (s jasnou hláškou).
+// Pošle Overpass dotaz. Pokud je nastavená proxy (Cloudflare Worker), jde to
+// přes ni (z Vercelu jediná spolehlivá cesta — Overpass blokuje AWS IP).
+// Jinak zkusí veřejné mirrory přímo (lokální dev).
 async function overpassRequest(ql: string): Promise<Response> {
   const body = new URLSearchParams({ data: ql }).toString();
+
+  const proxy = process.env.OVERPASS_PROXY_URL;
+  if (proxy) {
+    const res = await fetchWithTimeout(proxy, {
+      method: "POST",
+      timeoutMs: 25000,
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        "x-proxy-secret": process.env.OVERPASS_PROXY_SECRET ?? "",
+      },
+      body,
+    });
+    if (res.ok) return res;
+    const t = await res.text().catch(() => "");
+    throw new Error(`Overpass proxy vrátila ${res.status}: ${t.slice(0, 200)}`);
+  }
+
   const errors: string[] = [];
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
