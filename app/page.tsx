@@ -9,6 +9,7 @@ import {
   getUpcomingEvents,
 } from "@/db/queries";
 import { ASSIGNEE_CHIP, ASSIGNEE_LABEL, PRIORITY_BAR } from "@/lib/taskMeta";
+import { COLOR_TEXT, EVENT_KIND_LABEL, eventColorToken } from "@/lib/eventMeta";
 
 const czk = (n: number) => `${n.toLocaleString("cs-CZ")} Kč`;
 
@@ -193,13 +194,9 @@ export default async function ProvozPage() {
                   })}
                 </span>
                 <span
-                  className={
-                    e.kind === "meeting"
-                      ? "font-mono text-[10px] uppercase tracking-wider text-info"
-                      : "font-mono text-[10px] uppercase tracking-wider text-iris"
-                  }
+                  className={`font-mono text-[10px] uppercase tracking-wider ${COLOR_TEXT[eventColorToken(e)]}`}
                 >
-                  {e.kind === "meeting" ? "schůzka" : "follow-up"}
+                  {EVENT_KIND_LABEL[e.kind] ?? e.kind}
                 </span>
                 <span className="flex-1 truncate">{e.title}</span>
                 {e.lead && (

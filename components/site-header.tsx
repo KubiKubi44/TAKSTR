@@ -56,14 +56,6 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
         <nav className="glass-strong pointer-events-auto flex items-center gap-0.5 rounded-full p-1 text-[13px]">
           {LEFT_NAV.map(renderLink)}
           {divider}
-          <Link
-            href="/"
-            aria-label="TAK — domů"
-            className="select-none bg-linear-to-b from-foreground to-muted-foreground bg-clip-text px-2.5 font-heading text-[15px] font-bold tracking-[0.22em] text-transparent"
-          >
-            TAK
-          </Link>
-          {divider}
           {RIGHT_NAV.map(renderLink)}
         </nav>
       </header>

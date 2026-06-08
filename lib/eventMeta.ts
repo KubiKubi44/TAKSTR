@@ -49,6 +49,16 @@ export const COLOR_CHIP: Record<string, string> = {
   slate: "bg-foreground/10 text-foreground border-foreground/30",
 };
 
+export const COLOR_TEXT: Record<string, string> = {
+  info: "text-info",
+  iris: "text-iris",
+  gold: "text-gold",
+  success: "text-success",
+  rose: "text-rose-500",
+  cyan: "text-cyan-500",
+  slate: "text-muted-foreground",
+};
+
 export const COLOR_DOT: Record<string, string> = {
   info: "bg-info",
   iris: "bg-iris",
