@@ -6,11 +6,13 @@ import { fetchWithTimeout } from "./http";
 
 // Veřejné Overpass instance jsou flaky a z cloud IP (Vercel) občas resetují
 // spojení („fetch failed"). Zkoušíme víc mirrorů po sobě, dokud jeden nevyjde.
+// Z Vercelu (AWS IP) většina veřejných Overpass odmítá spojení; kumi se ozve
+// (jen pomalu). Rychlé de/lz4 zkusíme první (lokálně/jinde fungují), kumi je
+// spolehlivá pojistka s dlouhým timeoutem.
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://lz4.overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 const NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/search";
 
@@ -23,7 +25,8 @@ async function overpassRequest(ql: string): Promise<Response> {
     try {
       const res = await fetchWithTimeout(endpoint, {
         method: "POST",
-        timeoutMs: 28000,
+        // de/lz4 selžou na spojení rychle; kumi se ozve pomalu → dlouhý timeout
+        timeoutMs: 45000,
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body,
       });
