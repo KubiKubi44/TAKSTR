@@ -105,37 +105,33 @@ export function NewEventDialog({
           <DialogDescription>
             {presetLeadName
               ? `Navázáno na lead: ${presetLeadName}`
-              : "Schůzka nebo follow-up, volitelně navázaná na lead."}
+              : "Schůzka, follow-up, fakturace nebo vlastní událost."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>Typ</Label>
-              <Select
-                items={EVENT_KIND_LABEL}
-                value={kind}
-                onValueChange={(v) => setKind(v ?? "meeting")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_KINDS.map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {EVENT_KIND_LABEL[k]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Barva</Label>
-              <div className="flex h-8 items-center">
-                <ColorPicker value={color} onChange={setColor} />
-              </div>
-            </div>
+          <div className="grid gap-1.5">
+            <Label>Typ</Label>
+            <Select
+              items={EVENT_KIND_LABEL}
+              value={kind}
+              onValueChange={(v) => setKind(v ?? "meeting")}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EVENT_KINDS.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {EVENT_KIND_LABEL[k]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Barva</Label>
+            <ColorPicker value={color} onChange={setColor} />
           </div>
 
           <div className="grid gap-1.5">
