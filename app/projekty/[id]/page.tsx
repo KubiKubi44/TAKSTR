@@ -23,8 +23,9 @@ function ago(ms: number | null): string {
   return `před ${Math.round(h / 24)} dny`;
 }
 function stateBadge(state: string | null): string {
-  if (state === "READY") return "border-primary/40 text-primary";
+  if (state === "READY") return "border-success/40 text-success";
   if (state === "ERROR" || state === "CANCELED") return "border-destructive/50 text-destructive";
+  if (state === "BUILDING" || state === "QUEUED") return "border-info/40 text-info";
   return "border-border text-muted-foreground";
 }
 const czk = (n: number | null | undefined) =>
@@ -47,7 +48,7 @@ function PricesCard({
         </div>
         <div className="border border-border p-3">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíční správa</p>
-          <p className="mt-1 font-mono text-xl tabular-nums text-primary">{czk(meta?.monthlyPrice)}</p>
+          <p className="mt-1 font-mono text-xl tabular-nums text-success">{czk(meta?.monthlyPrice)}</p>
         </div>
       </div>
       <ProjectMetaForm

@@ -21,11 +21,11 @@ interface DisplayProject {
 }
 
 function stateClass(state: string | null): string {
-  if (state === "READY") return "border-primary/40 text-primary";
+  if (state === "READY") return "border-success/40 text-success";
   if (state === "ERROR" || state === "CANCELED")
     return "border-destructive/50 text-destructive";
   if (state === "BUILDING" || state === "QUEUED")
-    return "border-border text-muted-foreground animate-pulse";
+    return "border-info/40 text-info animate-pulse";
   return "border-border text-muted-foreground";
 }
 function stateLabel(state: string | null): string {
@@ -134,11 +134,11 @@ export default async function ProjectsPage({
         </Card>
         <Card className="gap-1 p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíčně · MRR</p>
-          <p className="font-mono text-2xl tabular-nums text-primary">{czk(monthlyTotal)}</p>
+          <p className="font-mono text-2xl tabular-nums text-success">{czk(monthlyTotal)}</p>
         </Card>
         <Card className="gap-1 p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Ročně · ARR</p>
-          <p className="font-mono text-2xl tabular-nums text-primary">{czk(monthlyTotal * 12)}</p>
+          <p className="font-mono text-2xl tabular-nums text-success">{czk(monthlyTotal * 12)}</p>
         </Card>
         <Card className="gap-1 p-4">
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Výroba celkem</p>
@@ -195,7 +195,7 @@ export default async function ProjectsPage({
               <div className="flex items-end justify-between gap-2 border-t border-white/8 pt-3">
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Měsíční správa</p>
-                  <p className="font-mono text-lg tabular-nums text-primary">{czk(p.monthlyPrice)}</p>
+                  <p className="font-mono text-lg tabular-nums text-success">{czk(p.monthlyPrice)}</p>
                 </div>
                 <p className="font-mono text-xs text-muted-foreground">výroba {czk(p.buildPrice)}</p>
               </div>

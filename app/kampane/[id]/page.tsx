@@ -79,7 +79,7 @@ export default async function CampaignDetailPage({
           ))}
           {rate && rate.sent > 0 && (
             <div className="flex items-center gap-2 border-l border-border pl-6">
-              <span className="font-mono text-lg tabular-nums text-primary">
+              <span className="font-mono text-lg tabular-nums text-info">
                 {Math.round(rate.rate * 100)} %
               </span>
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">

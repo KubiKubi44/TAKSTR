@@ -6,6 +6,12 @@ import { getCampaignsWithCounts } from "@/db/queries";
 
 export const dynamic = "force-dynamic";
 
+const STATUS_TONE: Record<string, string> = {
+  active: "text-success",
+  paused: "text-gold",
+  done: "text-muted-foreground/70",
+};
+
 export default async function CampaignsPage() {
   const campaigns = await getCampaignsWithCounts();
 
@@ -30,12 +36,13 @@ export default async function CampaignsPage() {
                   <h2 className="font-heading text-lg font-semibold tracking-tight">
                     {c.name}
                   </h2>
-                  <span className="font-mono text-2xl tabular-nums text-primary">
+                  <span className="font-mono text-2xl tabular-nums text-info">
                     {c.leadCount}
                   </span>
                 </div>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                  {c.vertical} · {c.region} · {c.status}
+                  {c.vertical} · {c.region} ·{" "}
+                  <span className={STATUS_TONE[c.status] ?? ""}>{c.status}</span>
                 </p>
               </Card>
             </Link>
