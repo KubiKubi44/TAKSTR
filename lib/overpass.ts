@@ -4,8 +4,41 @@ import { fetchWithTimeout } from "./http";
 // Nahrazuje Google Places ze spec. Vrací jen POI, které mají web
 // (bez webu nemáme co oslovit).
 
-const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter";
+// Veřejné Overpass instance jsou flaky a z cloud IP (Vercel) občas resetují
+// spojení („fetch failed"). Zkoušíme víc mirrorů po sobě, dokud jeden nevyjde.
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+];
 const NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/search";
+
+// Pošle Overpass dotaz na první funkční mirror. Při chybě spojení / 429 / 5xx
+// zkusí další; selže až když selžou všechny (s jasnou hláškou).
+async function overpassRequest(ql: string): Promise<Response> {
+  const body = new URLSearchParams({ data: ql }).toString();
+  const errors: string[] = [];
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        timeoutMs: 18000,
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      if (res.ok) return res;
+      if (res.status === 429 || res.status >= 500) {
+        errors.push(`${endpoint} → ${res.status}`);
+        continue; // přetížený / chyba serveru → zkus další mirror
+      }
+      const t = await res.text().catch(() => "");
+      throw new Error(`Overpass vrátil ${res.status}: ${t.slice(0, 200)}`);
+    } catch (err) {
+      errors.push(`${endpoint} → ${(err as Error).message}`);
+    }
+  }
+  throw new Error(`Overpass nedostupný (${OVERPASS_ENDPOINTS.length} serverů): ${errors.join("; ")}`);
+}
 
 // Tag filtr: buď jen klíč (existence), nebo klíč=hodnota.
 export interface TagFilter {
@@ -156,26 +189,14 @@ export async function searchPlaces({
     .map((f) => `  nwr${tagFilterToQL(f)}${ref};`)
     .join("\n");
 
-  const ql = `[out:json][timeout:60];
+  const ql = `[out:json][timeout:16];
 ${setup}
 (
 ${statements}
 );
 out tags center ${limit};`;
 
-  const res = await fetchWithTimeout(OVERPASS_ENDPOINT, {
-    method: "POST",
-    timeoutMs: 90000,
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ data: ql }).toString(),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `Overpass vrátil ${res.status}: ${body.slice(0, 300)}`,
-    );
-  }
+  const res = await overpassRequest(ql);
 
   const json = (await res.json()) as { elements?: OverpassElement[] };
   const elements = json.elements ?? [];

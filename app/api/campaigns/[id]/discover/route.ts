@@ -9,6 +9,9 @@ import {
 } from "@/lib/overpass";
 import { hostnameOf, isSocialUrl, normalizeWebsiteUrl } from "@/lib/url";
 
+// Discovery sahá na externí Overpass (může chvíli trvat) — víc času na funkci.
+export const maxDuration = 60;
+
 // POST /api/campaigns/:id/discover
 // Z campaign.filters zavolá Overpass, založí leady (discovered, source=osm),
 // deduplikuje podle website_url v rámci kampaně.
