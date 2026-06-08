@@ -13,8 +13,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Lead-gen & outreach",
-  description: "Interní nástroj na vyhledávání a oslovování potenciálních klientů.",
+  title: "TAK - Dashboard",
+  description: "Interní nástroj studia — leady, projekty, finance, kalendář.",
 };
 
 export default function RootLayout({
