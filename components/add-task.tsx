@@ -74,7 +74,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Nový úkol…"
-        className="min-w-48 flex-1"
+        className="w-full sm:min-w-48 sm:flex-1"
       />
       <Select items={priorityItems} value={priority} onValueChange={(v) => setPriority(v ?? "normal")}>
         <SelectTrigger className="w-28">

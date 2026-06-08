@@ -214,7 +214,7 @@ export function LeadsWorkspace({
       </div>
 
       {view === "table" ? (
-        <div className="glass overflow-hidden rounded-2xl">
+        <div className="glass overflow-x-auto rounded-2xl">
           <Table>
             <TableHeader>
               <TableRow>
@@ -226,11 +226,11 @@ export function LeadsWorkspace({
                   />
                 </TableHead>
                 <TableHead className="w-40">Příležitost</TableHead>
-                <TableHead className="w-28">Skóre webu</TableHead>
+                <TableHead className="hidden w-28 md:table-cell">Skóre webu</TableHead>
                 <TableHead className="w-28">Stav</TableHead>
                 <TableHead>Firma</TableHead>
-                <TableHead>Web</TableHead>
-                {showCampaign && <TableHead>Kampaň</TableHead>}
+                <TableHead className="hidden sm:table-cell">Web</TableHead>
+                {showCampaign && <TableHead className="hidden lg:table-cell">Kampaň</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,7 +253,7 @@ export function LeadsWorkspace({
                     <TableCell>
                       <OpportunityBadge opp={oppOf(l)} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <ScoreBadge score={l.score} />
                     </TableCell>
                     <TableCell>
@@ -265,13 +265,13 @@ export function LeadsWorkspace({
                         <LeadFlags flags={l.flags} />
                       </Link>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
+                    <TableCell className="hidden font-mono text-xs text-muted-foreground sm:table-cell">
                       <a href={l.websiteUrl} target="_blank" rel="noreferrer" className="hover:text-primary">
                         {hostOf(l.websiteUrl)}
                       </a>
                     </TableCell>
                     {showCampaign && (
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
                         {l.campaign?.name}
                       </TableCell>
                     )}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
@@ -15,6 +15,12 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "TAK - Dashboard",
   description: "Interní nástroj studia — leady, projekty, finance, kalendář.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // pod notch na iPhonu
 };
 
 export default function RootLayout({
