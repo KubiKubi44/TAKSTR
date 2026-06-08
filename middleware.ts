@@ -24,6 +24,6 @@ export const config = {
   // chráníme vše KROMĚ loginu, login API, Telegram webhooku/digestu, Resend
   // webhooku a odhlašovacího odkazu (vlastní secret/podpis) a statických assetů
   matcher: [
-    "/((?!login|api/login|api/telegram/webhook|api/telegram/digest|api/demand/poll|api/followups/run|api/resend/webhook|api/unsubscribe|_next/static|_next/image|favicon.ico).*)",
+    "/((?!login|api/login|api/cron/daily|api/telegram/webhook|api/telegram/digest|api/demand/poll|api/followups/run|api/resend/webhook|api/unsubscribe|_next/static|_next/image|favicon.ico).*)",
   ],
 };

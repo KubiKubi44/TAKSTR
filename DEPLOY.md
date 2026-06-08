@@ -53,13 +53,13 @@ Zkopíruj z lokálního `.env`. **Povinné pro běh:**
   zavolat `setWebhook` s prod URL a stejným secretem).
 
 ## 6. Cron (běží automaticky po nasazení)
-`vercel.json` už definuje:
-- `0 7 * * *` — denní Telegram digest
-- `0 7,12,17 * * *` — monitor poptávek
-- `0 8 * * 1-5` — auto-follow-upy (po–pá ráno)
+Vercel **Hobby (free) plán** umí cron **jen 1× denně**, proto je vše sloučené
+do jednoho denního cronu (`vercel.json`):
+- `0 7 * * *` → `/api/cron/daily` = digest + monitor poptávek + follow-upy.
 
-Cron endpointy ověřují `CRON_SECRET` (Vercel ho posílá automaticky).
-Ručně jdou spustit i z appky (Poptávky → „Obnovit teď", Obchod → „Follow-upy").
+Endpoint ověřuje `CRON_SECRET` (Vercel ho posílá automaticky).
+Ručně/častěji jdou spustit z appky kdykoliv (Poptávky → „Obnovit teď",
+Obchod → „Follow-upy"). Na **Pro** plánu jde cron rozdělit a spouštět častěji.
 
 ## Pozn. k DB stabilitě
 Pool je `max: 10` + `statement_timeout: 20s` (db/client.ts). Na Vercelu jsou
