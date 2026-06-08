@@ -2,9 +2,10 @@ import { db } from "@/db/client";
 import { task, type TaskPriority } from "@/db/schema";
 
 const PRIORITIES = ["low", "normal", "high"];
+const ASSIGNEES = ["tomis", "kubis", "osobni"];
 
 // POST /api/tasks — přidá úkol.
-// Tělo: { title, dueAt?, note?, priority?, projectId?, leadId? }
+// Tělo: { title, dueAt?, note?, priority?, projectId?, leadId?, assignee? }
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     title?: string;
@@ -13,6 +14,7 @@ export async function POST(req: Request) {
     priority?: string;
     projectId?: string;
     leadId?: string;
+    assignee?: string;
   } | null;
   if (!body?.title?.trim()) {
     return Response.json({ error: "Vyplň název úkolu." }, { status: 400 });
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
       priority,
       projectId: body.projectId || null,
       leadId: body.leadId || null,
+      assignee: ASSIGNEES.includes(body.assignee ?? "") ? body.assignee : null,
     })
     .returning({ id: task.id });
   return Response.json({ id: row.id });

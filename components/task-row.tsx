@@ -16,6 +16,7 @@ export interface TaskItem {
   title: string;
   done: boolean;
   priority: TaskPriority;
+  assignee: string | null;
   dueAt: string | Date | null;
   note: string | null;
   lead: { id: string; businessName: string } | null;

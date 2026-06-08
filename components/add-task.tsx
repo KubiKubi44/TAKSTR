@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRIORITIES, PRIORITY_LABEL } from "@/lib/taskMeta";
+import { ASSIGNEES, ASSIGNEE_LABEL, PRIORITIES, PRIORITY_LABEL } from "@/lib/taskMeta";
 
 const NONE = "none";
 
@@ -22,6 +23,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
   const [due, setDue] = useState("");
   const [priority, setPriority] = useState("normal");
   const [projectId, setProjectId] = useState(NONE);
+  const [assignee, setAssignee] = useState(NONE);
   const [loading, setLoading] = useState(false);
 
   async function add(e: React.FormEvent) {
@@ -37,6 +39,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
           dueAt: due || undefined,
           priority,
           projectId: projectId !== NONE ? projectId : undefined,
+          assignee: assignee !== NONE ? assignee : undefined,
         }),
       });
       if (!res.ok) {
@@ -46,6 +49,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
       setTitle("");
       setDue("");
       setProjectId(NONE);
+      setAssignee(NONE);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err));
@@ -74,6 +78,19 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
           ))}
         </SelectContent>
       </Select>
+      <Select value={assignee} onValueChange={(v) => setAssignee(v ?? NONE)}>
+        <SelectTrigger className="w-32">
+          <SelectValue placeholder="Pro koho" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>Pro koho</SelectItem>
+          {ASSIGNEES.map((a) => (
+            <SelectItem key={a} value={a}>
+              {ASSIGNEE_LABEL[a]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {projects.length > 0 && (
         <Select value={projectId} onValueChange={(v) => setProjectId(v ?? NONE)}>
           <SelectTrigger className="w-40">
@@ -89,13 +106,7 @@ export function AddTask({ projects }: { projects: { id: string; name: string }[]
           </SelectContent>
         </Select>
       )}
-      <Input
-        type="date"
-        value={due}
-        onChange={(e) => setDue(e.target.value)}
-        className="w-40"
-        title="Termín (volitelně)"
-      />
+      <DatePicker value={due} onChange={setDue} className="w-40" />
       <Button type="submit" disabled={loading}>
         {loading ? "…" : "Přidat"}
       </Button>

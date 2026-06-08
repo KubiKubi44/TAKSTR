@@ -3,9 +3,10 @@ import { db } from "@/db/client";
 import { task } from "@/db/schema";
 
 const PRIORITIES = ["low", "normal", "high"];
+const ASSIGNEES = ["tomis", "kubis", "osobni"];
 
 // POST /api/tasks/:id — úprava úkolu (jen poslaná pole).
-// Tělo: { title?, dueAt?, priority?, projectId?, leadId?, note? }
+// Tělo: { title?, dueAt?, priority?, projectId?, leadId?, note?, assignee? }
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -27,6 +28,9 @@ export async function POST(
   if ("projectId" in body) set.projectId = (body.projectId as string) || null;
   if ("leadId" in body) set.leadId = (body.leadId as string) || null;
   if ("note" in body) set.note = typeof body.note === "string" ? body.note.trim() || null : null;
+  if ("assignee" in body) {
+    set.assignee = ASSIGNEES.includes(body.assignee as string) ? body.assignee : null;
+  }
 
   await db.update(task).set(set).where(eq(task.id, id));
   return Response.json({ ok: true });

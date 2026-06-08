@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,20 +22,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRIORITIES, PRIORITY_LABEL } from "@/lib/taskMeta";
+import { ASSIGNEES, ASSIGNEE_LABEL, PRIORITIES, PRIORITY_LABEL } from "@/lib/taskMeta";
 import type { TaskPriority } from "@/db/schema";
+
+const NONE = "none";
 
 export function EditTaskDialog({
   task,
 }: {
-  task: { id: string; title: string; dueAt: string | Date | null; priority: TaskPriority };
+  task: {
+    id: string;
+    title: string;
+    dueAt: string | Date | null;
+    priority: TaskPriority;
+    assignee?: string | null;
+  };
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(task.title);
-  const [due, setDue] = useState(task.dueAt ? new Date(task.dueAt).toISOString().slice(0, 10) : "");
+  const [due, setDue] = useState(
+    task.dueAt
+      ? (() => {
+          const d = new Date(task.dueAt);
+          const p = (n: number) => String(n).padStart(2, "0");
+          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+        })()
+      : "",
+  );
   const [priority, setPriority] = useState<string>(task.priority);
+  const [assignee, setAssignee] = useState<string>(task.assignee ?? NONE);
 
   async function save() {
     if (!title.trim()) return;
@@ -43,7 +61,12 @@ export function EditTaskDialog({
       const res = await fetch(`/api/tasks/${task.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), dueAt: due || null, priority }),
+        body: JSON.stringify({
+          title: title.trim(),
+          dueAt: due || null,
+          priority,
+          assignee: assignee !== NONE ? assignee : null,
+        }),
       });
       if (!res.ok) {
         toast.error("Nepovedlo se");
@@ -77,8 +100,8 @@ export function EditTaskDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="t-due">Termín</Label>
-              <Input id="t-due" type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+              <Label>Termín</Label>
+              <DatePicker value={due} onChange={setDue} className="w-full" />
             </div>
             <div className="grid gap-1.5">
               <Label>Priorita</Label>
@@ -95,6 +118,22 @@ export function EditTaskDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Pro koho</Label>
+            <Select value={assignee} onValueChange={(v) => setAssignee(v ?? NONE)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Nepřiřazeno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>Nepřiřazeno</SelectItem>
+                {ASSIGNEES.map((a) => (
+                  <SelectItem key={a} value={a}>
+                    {ASSIGNEE_LABEL[a]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>

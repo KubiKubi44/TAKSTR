@@ -330,6 +330,8 @@ export const task = pgTable("task", {
   title: text("title").notNull(),
   done: boolean("done").default(false).notNull(),
   priority: taskPriorityEnum("priority").default("normal").notNull(),
+  // pro koho úkol je: "tomis" | "kubis" | "osobni" (null = nepřiřazeno)
+  assignee: text("assignee"),
   dueAt: timestamp("due_at", { withTimezone: true }),
   note: text("note"),
   leadId: uuid("lead_id").references(() => lead.id, { onDelete: "set null" }),
