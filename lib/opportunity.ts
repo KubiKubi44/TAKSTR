@@ -67,6 +67,11 @@ export function computeOpportunity(input: OpportunityInput): OpportunityScore {
     if (f.noHttps) need += 8;
     if (f.techStale) need += 10;
   }
+  // nová firma (z ARES) — potřebuje první pořádný web
+  if (e.newFirm) {
+    need += 10;
+    reasons.push("nová firma");
+  }
   need = clamp(need);
 
   // ── BONITA (má firma peníze?) ────────────────────────────

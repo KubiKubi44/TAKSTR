@@ -138,6 +138,12 @@ export async function enrichLead(leadId: string, actor: ActivityActor) {
     );
   }
 
+  // nová firma (vznik < 18 měsíců) — potřebuje první pořádný web
+  const foundedAt = ares?.foundedAt ? new Date(ares.foundedAt) : null;
+  const newFirm = !!(
+    foundedAt && Date.now() - foundedAt.getTime() < 18 * 30 * 86400000
+  );
+
   const enrichment: Record<string, unknown> = {
     ...row.enrichment,
     ...(ares
@@ -148,6 +154,7 @@ export async function enrichLead(leadId: string, actor: ActivityActor) {
           foundedAt: ares.foundedAt,
           address: ares.address,
           nace: ares.nace,
+          newFirm,
         }
       : {}),
     ...(rating

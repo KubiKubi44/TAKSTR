@@ -296,7 +296,14 @@ export default async function LeadDetailPage({
             const nace = Array.isArray(e.nace) ? (e.nace as string[]) : [];
             return (
               <Card className="gap-2 p-5">
-                <h2 className="font-heading text-sm font-semibold">Firma &amp; hodnocení</h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-heading text-sm font-semibold">Firma &amp; hodnocení</h2>
+                  {e.newFirm ? (
+                    <span className="border border-gold/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-gold">
+                      nová firma
+                    </span>
+                  ) : null}
+                </div>
                 <dl className="space-y-1 text-sm">
                   {typeof e.rating === "number" && (
                     <Row
