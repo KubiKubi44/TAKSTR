@@ -8,8 +8,9 @@ import { fetchWithTimeout } from "./http";
 // spojení („fetch failed"). Zkoušíme víc mirrorů po sobě, dokud jeden nevyjde.
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
   "https://lz4.overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 const NOMINATIM_ENDPOINT = "https://nominatim.openstreetmap.org/search";
 
@@ -22,7 +23,7 @@ async function overpassRequest(ql: string): Promise<Response> {
     try {
       const res = await fetchWithTimeout(endpoint, {
         method: "POST",
-        timeoutMs: 18000,
+        timeoutMs: 28000,
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body,
       });
