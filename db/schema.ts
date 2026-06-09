@@ -408,6 +408,17 @@ export const demandLead = pgTable(
   (t) => [unique("demand_source_external_uq").on(t.source, t.externalId)],
 );
 
+// push_subscription — odběr web push notifikací (jedno zařízení = jeden řádek).
+export const pushSubscription = pgTable("push_subscription", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // telegram_state — krátkodobý stav konverzace bota, klíčovaný chat_id.
 // mode='await_edit' = bot čeká na text s instrukcí k úpravě draftu.
 export const telegramState = pgTable("telegram_state", {
@@ -525,6 +536,7 @@ export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 export type DemandLead = typeof demandLead.$inferSelect;
 export type NewDemandLead = typeof demandLead.$inferInsert;
 export type DemandStatus = (typeof demandStatusEnum.enumValues)[number];
+export type PushSubscription = typeof pushSubscription.$inferSelect;
 export type CalendarEvent = typeof calendarEvent.$inferSelect;
 export type NewCalendarEvent = typeof calendarEvent.$inferInsert;
 export type EventKind = (typeof eventKindEnum.enumValues)[number];

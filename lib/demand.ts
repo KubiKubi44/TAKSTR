@@ -3,6 +3,7 @@ import { fetchWithTimeout } from "./http";
 import { db } from "@/db/client";
 import { demandLead } from "@/db/schema";
 import { sendMessage } from "./telegram";
+import { sendPush } from "./push";
 
 // Monitor teplé poptávky z portálů (Poptávej.cz, ePoptávka.cz): někdo veřejně
 // shání „web / e-shop / SEO". Stáhneme veřejné výpisy (robots.txt to dovoluje),
@@ -220,6 +221,16 @@ function escapeHtml(s: string): string {
 }
 
 async function notifyDemand(items: DemandItem[]): Promise<void> {
+  // push do PWA (telefon)
+  await sendPush({
+    title: `🔔 Nové poptávky (${items.length})`,
+    body: items
+      .slice(0, 3)
+      .map((it) => it.title)
+      .join(" · "),
+    url: "/poptavky",
+  }).catch(() => {});
+
   if (!process.env.TELEGRAM_BOT_TOKEN) return;
   const user = await db.query.appUser.findFirst();
   const chatId = user?.telegramChatId;

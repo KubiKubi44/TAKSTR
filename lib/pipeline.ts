@@ -16,6 +16,7 @@ import { lookupAres } from "@/lib/ares";
 import { lookupRating, placesEnabled } from "@/lib/places";
 import { CLAUDE_MODEL, generateDraft, parseSender } from "@/lib/claude";
 import { logActivity, updateLeadStatus } from "@/lib/leads";
+import { sendPush } from "@/lib/push";
 import { sendEmail, SuppressedRecipientError } from "@/lib/resend";
 import { sendDraftMessage } from "@/lib/telegram";
 import { hostnameOf, normalizeWebsiteUrl } from "@/lib/url";
@@ -460,24 +461,33 @@ export async function createLeadFromUrl(
 
 // ── Notifikace do Telegramu po vzniku draftu ─────────────────
 async function notifyNewDraft(leadId: string): Promise<void> {
-  if (!process.env.TELEGRAM_BOT_TOKEN) return;
-  const user = await db.query.appUser.findFirst();
-  const chatId = user?.telegramChatId;
-  if (!chatId) return;
-
   const leadRow = await getLeadWithRelations(leadId);
   const draft = leadRow?.drafts.at(-1);
   if (!leadRow || !draft) return;
 
-  await sendDraftMessage(chatId, {
-    leadId: leadRow.id,
-    draftId: draft.id,
-    businessName: leadRow.businessName,
-    version: draft.version,
-    subject: draft.subject,
-    body: draft.body,
-    recipient: draft.recipientEmail ?? leadRow.contactEmail,
-  });
+  // push do PWA (telefon)
+  await sendPush({
+    title: `Nový draft — ${leadRow.businessName}`,
+    body: draft.subject,
+    url: `/leady/${leadRow.id}`,
+  }).catch(() => {});
+
+  // Telegram (pokud je nastavený)
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const user = await db.query.appUser.findFirst();
+    const chatId = user?.telegramChatId;
+    if (chatId) {
+      await sendDraftMessage(chatId, {
+        leadId: leadRow.id,
+        draftId: draft.id,
+        businessName: leadRow.businessName,
+        version: draft.version,
+        subject: draft.subject,
+        body: draft.body,
+        recipient: draft.recipientEmail ?? leadRow.contactEmail,
+      }).catch(() => {});
+    }
+  }
 }
 
 // Najde app_user podle telegram chat_id (whitelist pro bota).

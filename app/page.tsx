@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NotificationsToggle } from "@/components/notifications-toggle";
 import { PageContainer, PageHeader } from "@/components/page-shell";
 import { Card } from "@/components/ui/card";
 import {
@@ -48,7 +49,7 @@ export default async function ProvozPage() {
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="Chod firmy" title="Provoz" />
+      <PageHeader eyebrow="Chod firmy" title="Provoz" actions={<NotificationsToggle />} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Metric label="MRR" value={czk(fin.mrr)} hint={`${fin.paying} projektů ve správě`} tone="text-success" />
