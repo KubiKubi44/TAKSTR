@@ -75,14 +75,14 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
   return (
     <>
       {/* ── Desktop: plovoucí dock + ovládání vpravo ── */}
-      <header className="pointer-events-none sticky top-0 z-30 hidden justify-center px-4 pt-3 lg:flex">
+      <header className="pointer-events-none sticky top-0 z-30 hidden justify-center px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] lg:flex">
         <nav className="glass-strong pointer-events-auto flex items-center gap-0.5 rounded-full p-1 text-[13px]">
           {LEFT_NAV.map(renderLink)}
           {divider}
           {RIGHT_NAV.map(renderLink)}
         </nav>
       </header>
-      <div className="fixed top-3 right-4 z-40 hidden items-center gap-0.5 rounded-full glass-strong p-1 text-[13px] lg:flex">
+      <div className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-4 z-40 hidden items-center gap-0.5 rounded-full glass-strong p-1 text-[13px] lg:flex">
         <ThemeToggle />
         {authEnabled && (
           <>
@@ -100,7 +100,7 @@ export function SiteHeader({ authEnabled = false }: { authEnabled?: boolean }) {
 
       {/* ── Mobil / tablet: horní lišta + hamburger menu ── */}
       <header className="sticky top-0 z-40 lg:hidden">
-        <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] bg-background/70 px-4 py-2.5 backdrop-blur-xl backdrop-saturate-150">
+        <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] bg-background/70 px-4 pt-[calc(env(safe-area-inset-top)+0.625rem)] pb-2.5 backdrop-blur-xl backdrop-saturate-150">
           <span className="font-heading text-[15px] font-semibold tracking-tight">{activeLabel}</span>
           <div className="flex items-center gap-1">
             <ThemeToggle />
